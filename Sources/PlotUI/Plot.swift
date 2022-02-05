@@ -37,27 +37,32 @@ extension StrokeStyle {
 }
 
 
-public struct PlotAxis<Axis: AxisShape, LabelStyle: TickLabelStyle>: View {
+public struct PlotAxis<Tick: TickShape>: View {
     /// The list of tick locations relative to the scaled axis.
     private var ticks: [CGFloat] = []
     private var tickStyle: StrokeStyle = .tinyDashed
 
     /// The labels to place at the given ticks locations.
     private var labels: [LocalizedStringKey] = []
-    private var labelStyle: LabelStyle
+
+    private var labelStyle: AnyTickLabelStyle
 
     @EnvironmentObject var coords: CoordinateSpace
 
-    internal init(
+    internal init<S: TickLabelStyle>(
         _ ticks: [CGFloat] = [],
-        _ tickStyle: StrokeStyle,
+        _ tickStyle: StrokeStyle = .tinyDashed,
         _ labels: [LocalizedStringKey] = [],
-        _ labelStyle: LabelStyle
+        _ labelStyle: S
     ) {
         self.ticks = ticks
         self.labels = labels
         self.tickStyle = tickStyle
-        self.labelStyle = labelStyle
+        self.labelStyle = AnyTickLabelStyle(labelStyle)
+    }
+
+    public init<S: TickLabelStyle>(labelStyle: S) {
+        self.labelStyle = AnyTickLabelStyle(labelStyle)
     }
 
     private func subscriptLabel(_ index: Int, defaultValue: LocalizedStringKey = "") -> LocalizedStringKey {
@@ -69,9 +74,9 @@ public struct PlotAxis<Axis: AxisShape, LabelStyle: TickLabelStyle>: View {
     
     public var body: some View {
         ForEach(ticks.indices, id: \.self) { i in
-            Axis(coords, at: ticks[i])
+            Tick(coords, at: ticks[i])
                 .stroke(style: tickStyle)
-                .tick(subscriptLabel(i), style: labelStyle)
+                .tickLabel(subscriptLabel(i), style: labelStyle)
         }
     }
 
@@ -87,61 +92,28 @@ public struct PlotAxis<Axis: AxisShape, LabelStyle: TickLabelStyle>: View {
         return Self(ticks, tickStyle, Array(labels), labelStyle)
     }
 
-    public func labelStyle<S: TickLabelStyle>(_ style: S) -> PlotAxis<Axis, S> {
-        return PlotAxis<Axis, S>(ticks, tickStyle, labels, style)
+    public func labelStyle<S: TickLabelStyle>(_ style: S) -> Self {
+        return Self<Tick>(ticks, tickStyle, labels, style)
     }
 }
 
 
-public typealias PlotYAxis = PlotAxis<HorizontalAxis, TrailingTickLabelStyle>
-
-
-extension PlotYAxis {
-    public init() { labelStyle = .trailing }
-}
-
-
-public typealias PlotXAxis = PlotAxis<VerticalAxis, BottomTrailingTickLabelStyle>
-
-
-extension PlotXAxis {
-    public init() { labelStyle = .bottomTrailing }
-}
-
-
-//public struct PlotBoundaryView: View {
-//
-//    @EnvironmentObject var coords: CoordinateSpace
-//
-//    public var strokeStyle: StrokeStyle = StrokeStyle(lineWidth: 0.2)
-//
-//    public var body: some View {
-//        ZStack {
-//            HorizontalAxis(coords.normalized, at: 0).stroke(style: strokeStyle)
-//            HorizontalAxis(coords.normalized, at: coords.normalized.height).stroke(style: strokeStyle)
-//            VerticalAxis(coords.normalized, at: 0).stroke(style: strokeStyle)
-//            VerticalAxis(coords.normalized, at: coords.normalized.width).stroke(style: strokeStyle)
-//        }
-//    }
-//}
-
-
-
-public struct PlotView<XAxis: View, YAxis: View>: View {
+public struct PlotView: View {
     
     @StateObject var coords = CoordinateSpace()
     
-    public var content: BarView<Color>
+    public var content: AnyFuncView
+
+    public typealias XAxis = PlotAxis<VerticalTick>
+    public typealias YAxis = PlotAxis<HorizontalTick>
     
     private var xaxis: XAxis
     private var yaxis: YAxis
-    
-//    public typealias HorizontalAxis = PlotAxis<HorizontalAxis
-    
-    internal init(_ xaxis: XAxis, _ yaxis: YAxis, _ content: BarView<Color>) {
+
+    internal init<Content: FuncView>(_ xaxis: XAxis, _ yaxis: YAxis, _ content: Content) {
         self.xaxis = xaxis
         self.yaxis = yaxis
-        self.content = content
+        self.content = AnyFuncView(content)
     }
 
     public var body: some View {
@@ -151,8 +123,8 @@ public struct PlotView<XAxis: View, YAxis: View>: View {
             content
         }
         .onAppear(perform: {
-            coords.xlim = (content.xmin, content.xmax)
-            coords.ylim = (content.ymin, content.ymax)
+            coords.xlim = (content.domain.lowerBound, content.domain.upperBound)
+            coords.ylim = (content.image.lowerBound, content.image.upperBound)
         })
         .padding(100)
         .background(Color.white)
@@ -162,26 +134,26 @@ public struct PlotView<XAxis: View, YAxis: View>: View {
 }
 
 
-extension PlotView where XAxis == PlotXAxis, YAxis == PlotYAxis {
-    public init(@ViewBuilder content: () -> BarView<Color>) {
-        self.content = content()
-        self.xaxis = PlotXAxis()
-        self.yaxis = PlotYAxis()
+extension PlotView {
+    public init<Content: FuncView>(@ViewBuilder content: () -> Content) {
+        self.content = AnyFuncView(content())
+        self.xaxis = XAxis(labelStyle: .bottomTrailing)
+        self.yaxis = YAxis(labelStyle: .trailing)
 
         let numXTicks = 10
         let numYTicks = 4
         
-        let xInterval = Double(abs(self.content.xmax - self.content.xmin)) / Double(numXTicks)
-        let yInterval = Double(abs(self.content.ymax - self.content.ymin)) / Double(numYTicks)
+        let xInterval = Double(self.content.domain.length) / Double(numXTicks)
+        let yInterval = Double(self.content.image.length) / Double(numYTicks)
         
         let xticks = (0...numXTicks).map { tick in
-            self.content.xmin + Double(tick) * xInterval
+            self.content.domain.lowerBound + Double(tick) * xInterval
         }
         let yticks = (0...numYTicks).map { tick in
-            self.content.ymin + Double(tick) * yInterval
+            self.content.image.lowerBound + Double(tick) * yInterval
         }
 
-        let asLabel = { (tick: Double) -> LocalizedStringKey in LocalizedStringKey(String(tick)) }
+        let asLabel = { (tick: Double) -> LocalizedStringKey in LocalizedStringKey(String(format: "%.2f", tick)) }
         let xlabels = xticks.map(asLabel)
         let ylabels = yticks.map(asLabel)
         
@@ -203,7 +175,7 @@ extension Array where Self.Element == CGFloat {
 }
 
 
-extension PlotView where XAxis == PlotXAxis {
+extension PlotView {
 
     public func horizontalTicks<S: Sequence, Tick: BinaryInteger>(
         _ ticks: S, style: StrokeStyle = .tinyDashed
@@ -220,15 +192,15 @@ extension PlotView where XAxis == PlotXAxis {
 
     public func horizontalLabels<S: Sequence, LabelStyle: TickLabelStyle>(
         _ labels: S, style: LabelStyle
-    ) -> PlotView<PlotAxis<VerticalAxis, LabelStyle>, YAxis> where S.Element == LocalizedStringKey {
+    ) -> Self where S.Element == LocalizedStringKey {
         
         let axis = xaxis.labels(labels).labelStyle(style)
-        return PlotView<PlotAxis<VerticalAxis, LabelStyle>, YAxis>(axis, yaxis, content)
+        return Self(axis, yaxis, content)
     }
 }
 
 
-extension PlotView where YAxis == PlotYAxis {
+extension PlotView {
 
     public func verticalTicks<S: Sequence, Tick: BinaryInteger>(
         _ ticks: S, style: StrokeStyle = .tiny
@@ -245,10 +217,10 @@ extension PlotView where YAxis == PlotYAxis {
 
     public func verticalLabels<S: Sequence, LabelStyle: TickLabelStyle>(
         _ labels: S, style: LabelStyle
-    ) -> PlotView<XAxis, PlotAxis<HorizontalAxis, LabelStyle>> where S.Element == LocalizedStringKey {
+    ) -> Self where S.Element == LocalizedStringKey {
 
         let axis = yaxis.labels(labels).labelStyle(style)
-        return PlotView<XAxis, PlotAxis<HorizontalAxis, LabelStyle>>(xaxis, axis, content)
+        return Self(xaxis, axis, content)
     }
 }
 
@@ -259,17 +231,19 @@ struct PlotViewPreview: PreviewProvider {
         PlotView {
             BarView(
                 x:      [0, 1, 2, 3, 4, 5, 5.5],
-                height: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90],
-                xmin: -3,
-                xmax: 7,
-                ymin: 0,
-                ymax: 60
+                height: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+//                domain: -3.0...7.0,
+//                image: 0.0...60.0
+//                xmin: -3,
+//                xmax: 7,
+//                ymin: 0,
+//                ymax: 60
             )
             .fill(.green)
         }
 //        .horizontalTicks(-3...0)
-//        .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottomTrailing)
+//        .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
 //        .verticalTicks([0, 20, 40, 60])
-//        .verticalLabels(["0m", "20m", "40m", "60m"])
+//        .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
     }
 }

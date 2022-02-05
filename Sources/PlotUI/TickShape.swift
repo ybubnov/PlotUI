@@ -2,12 +2,12 @@ import Foundation
 import SwiftUI
 
 
-public protocol AxisShape: Shape {
+public protocol TickShape: Shape {
     init(_ space: CoordinateSpace, at: CGFloat)
 }
 
 
-public struct VerticalAxis: AxisShape {
+public struct VerticalTick: TickShape {
     private var at: CGFloat
     
     // TODO: move x-tick and y-tick sizes into observed object.
@@ -35,7 +35,7 @@ public struct VerticalAxis: AxisShape {
 }
 
 
-public struct HorizontalAxis: AxisShape {
+public struct HorizontalTick: TickShape {
     private var at: CGFloat
 
     private var xtick: CGFloat = 40

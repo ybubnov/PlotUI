@@ -8,6 +8,23 @@ public protocol TickLabelStyle {
     func position(axis: CGRect, tick: Text) -> Body
 }
 
+public struct AnyTickLabelStyle: TickLabelStyle {
+    
+    public typealias Body = AnyView
+    
+    private let parentPosition: (CGRect, Text) -> AnyView
+
+    public init<S: TickLabelStyle>(_ style: S) {
+        self.parentPosition = {(axis: CGRect, tick: Text) in
+            AnyView(style.position(axis: axis, tick: tick))
+        }
+    }
+
+    public func position(axis: CGRect, tick: Text) -> AnyView {
+        return parentPosition(axis, tick)
+    }
+}
+
 public struct TickLabelStyleConfiguration {
     /// A type-erased label of a tick.
     public struct Label : View {
@@ -111,16 +128,21 @@ public struct TrailingTickLabelStyle: TickLabelStyle {
 }
 
 
-public struct Tick: View {
+public struct TickLabel: View {
     public var label: LocalizedStringKey
     public var axis: Path
+    
+    public init(_ label: LocalizedStringKey, axis: Path) {
+        self.label = label
+        self.axis = axis
+    }
     
     public var body: some View {
         Text(label)
     }
 }
 
-extension Tick {
+extension TickLabel {
     
     public func tickLabelStyle<S: TickLabelStyle>(_ style: S) -> some View {
         GeometryReader { rect in
@@ -135,16 +157,16 @@ extension Shape {
         return CGRect(origin: CGPoint(), size: rect.size)
     }
     
-    public func tick<S: TickLabelStyle>(_ label: LocalizedStringKey, style: S) -> some View {
+    public func tickLabel<S: TickLabelStyle>(_ label: LocalizedStringKey, style: S) -> some View {
         GeometryReader { rect in
-            Tick(label: label, axis: path(in: boundingRect(rect))).tickLabelStyle(style)
+            TickLabel(label, axis: path(in: boundingRect(rect))).tickLabelStyle(style)
             self
         }
     }
     
-    public func tick(_ label: LocalizedStringKey) -> some View {
+    public func tickLabel(_ label: LocalizedStringKey) -> some View {
         GeometryReader { rect in
-            Tick(label: label, axis: path(in: boundingRect(rect)))
+            TickLabel(label, axis: path(in: boundingRect(rect)))
             self
         }
     }
