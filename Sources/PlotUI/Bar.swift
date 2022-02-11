@@ -1,63 +1,27 @@
 import Foundation
 import SwiftUI
 
-public protocol FuncView: View {
-
-    var domain: ClosedRange<Double> { get }
-
-    var image: ClosedRange<Double> { get }
-}
-
-public struct AnyFuncView: FuncView {
-
-    public typealias Body = AnyView
-
-    private var _domain: ClosedRange<Double>
-    private var _image: ClosedRange<Double>
-    private var _view: AnyView
-
-    public init<V: FuncView>(_ view: V) {
-        self._view = AnyView(view)
-        self._domain = view.domain
-        self._image = view.image
-    }
-
-    public var domain: ClosedRange<Double> { _domain }
-
-    public var image: ClosedRange<Double> { _image }
-
-    public var body: AnyView {
-        _view
-    }
-
-}
-
-extension ClosedRange where Bound == Double {
-
-    var length: Double { abs(upperBound - lowerBound) }
-}
-
 public struct BarView<Style: ShapeStyle>: FuncView {
 
     private var x: [Double]
     private var heights: [Double]
 
-    private var _domain: ClosedRange<Double>
-    private var _image: ClosedRange<Double>
+    private var _domain: Numbers
+    private var _image: Numbers
 
     // Fill style of the bars.
     private var fillStyle: Style
     private var radius: CGFloat = 2
     private var width: CGFloat = 5
 
-    public var domain: ClosedRange<Double> { _domain }
-    public var image: ClosedRange<Double> { _image }
+    public var domain: Numbers { _domain }
+    public var image: Numbers { _image }
 
     internal init(
         _ x: [Double],
         _ heights: [Double],
-        _ domain: ClosedRange<Double>,
-        _ image: ClosedRange<Double>,
+        _ domain: Numbers,
+        _ image: Numbers,
         _ fillStyle: Style
     ) {
         self.x = x
@@ -69,8 +33,8 @@ public struct BarView<Style: ShapeStyle>: FuncView {
 
     public var body: some View {
         GeometryReader { rect in
-            let width = rect.size.width - 40
-            let height = rect.size.height - 40
+            let width = max(0, rect.size.width - 40)
+            let height = max(0, rect.size.height - 40)
 
             let xScale = width / CGFloat(domain.length)
             let yScale = height / CGFloat(image.length)
@@ -103,12 +67,12 @@ public struct BarView<Style: ShapeStyle>: FuncView {
 extension BarView where Style == Color {
     public init(
         x: [Double],
-        height: [Double],
-        domain: ClosedRange<Double>? = nil,
-        image: ClosedRange<Double>? = nil
+        heights: [Double],
+        domain: Numbers? = nil,
+        image: Numbers? = nil
     ) {
         self.x = x
-        self.heights = height
+        self.heights = heights
 
         // If data limits are not specified, try to calculate the maximum
         // value from the provided data array, then set to 1.0 if the array

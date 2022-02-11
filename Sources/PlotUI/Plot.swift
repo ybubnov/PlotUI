@@ -227,7 +227,7 @@ struct PlotViewPreview: PreviewProvider {
         PlotView {
             BarView(
                 x: [0, 1, 2, 3, 4, 5, 5.5],
-                height: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                heights: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
                 //                domain: -3.0...7.0,
                 //                image: 0.0...60.0
                 //                xmin: -3,
