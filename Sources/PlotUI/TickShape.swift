@@ -20,10 +20,10 @@ public struct VerticalTick: TickShape {
     }
 
     public func path(in rect: CGRect) -> Path {
-        let xScale = (rect.size.width - xtick) / disposition.width
+        let xScale = (rect.size.width - xtick) / disposition.bounds.width
         let yOffset = rect.size.height - ytick
 
-        let x = (at - disposition.xlim.left) * xScale
+        let x = (at - disposition.bounds.left) * xScale
 
         return Path { path in
             path.move(to: CGPoint(x: x, y: yOffset))
@@ -46,14 +46,14 @@ public struct HorizontalTick: TickShape {
     }
 
     public func path(in rect: CGRect) -> Path {
-        let limit = disposition.height
+        let limit = disposition.bounds.height
 
         // All y-axis ticks are located on the horizontal axis, hence subtract the
         // size of y-tick from the width of this axis.
         let xOffset = rect.size.width - ytick
         let yScale = (rect.size.height - xtick) / limit
 
-        let y = (rect.size.height - xtick) - (at - disposition.ylim.bottom) * yScale
+        let y = (rect.size.height - xtick) - (at - disposition.bounds.bottom) * yScale
 
         return Path { path in
             path.move(to: CGPoint(x: 0, y: y))

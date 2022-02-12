@@ -1,27 +1,6 @@
 import Foundation
 import SwiftUI
 
-public class ContentDisposition: ObservableObject {
-    public typealias WBounds = (left: Double, right: Double)
-    public typealias HBounds = (bottom: Double, top: Double)
-
-    @Published var xlim: WBounds
-    @Published var ylim: HBounds
-
-    public var width: Double { abs(xlim.right - xlim.left) }
-
-    public var height: Double { abs(ylim.top - ylim.bottom) }
-
-    public init(w: WBounds = (0, 1), h: HBounds = (0, 1)) {
-        self.xlim = w
-        self.ylim = h
-    }
-
-    public var normalized: ContentDisposition {
-        ContentDisposition(w: (0, width), h: (0, height))
-    }
-}
-
 extension StrokeStyle {
     static public var tinyDashed: StrokeStyle {
         StrokeStyle(lineWidth: 0.2, dash: [2])
@@ -119,8 +98,7 @@ public struct PlotView: View {
             content
         }
         .onAppear(perform: {
-            disposition.xlim = (content.domain.lowerBound, content.domain.upperBound)
-            disposition.ylim = (content.image.lowerBound, content.image.upperBound)
+            disposition.bounds = content.disposition.bounds
         })
         .padding(100)
         .background(Color.white)
@@ -138,14 +116,14 @@ extension PlotView {
         let numXTicks = 10
         let numYTicks = 4
 
-        let xInterval = Double(self.content.domain.length) / Double(numXTicks)
-        let yInterval = Double(self.content.image.length) / Double(numYTicks)
+        let xInterval = Double(self.content.disposition.bounds.width) / Double(numXTicks)
+        let yInterval = Double(self.content.disposition.bounds.height) / Double(numYTicks)
 
         let xticks = (0...numXTicks).map { tick in
-            self.content.domain.lowerBound + Double(tick) * xInterval
+            self.content.disposition.bounds.left + Double(tick) * xInterval
         }
         let yticks = (0...numYTicks).map { tick in
-            self.content.image.lowerBound + Double(tick) * yInterval
+            self.content.disposition.bounds.bottom + Double(tick) * yInterval
         }
 
         let asLabel = { (tick: Double) -> LocalizedStringKey in
@@ -227,7 +205,7 @@ struct PlotViewPreview: PreviewProvider {
         PlotView {
             BarView(
                 x: [0, 1, 2, 3, 4, 5, 5.5],
-                heights: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
                 //                domain: -3.0...7.0,
                 //                image: 0.0...60.0
                 //                xmin: -3,
