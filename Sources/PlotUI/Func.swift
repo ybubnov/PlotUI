@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 public class ContentDisposition: ObservableObject, Equatable {
-    public struct Bounds : Equatable {
+    public struct Bounds: Equatable {
         public var left: Double
         public var right: Double
         public var bottom: Double
@@ -17,10 +17,8 @@ public class ContentDisposition: ObservableObject, Equatable {
         /// Returns a Boolean value indicating whether two values are equal.
         public static func == (lhs: Bounds, rhs: Bounds) -> Bool {
             return
-                lhs.left == rhs.left &&
-                lhs.right == rhs.right &&
-                lhs.bottom == rhs.bottom &&
-                lhs.top == rhs.top
+                lhs.left == rhs.left && lhs.right == rhs.right && lhs.bottom == rhs.bottom
+                && lhs.top == rhs.top
         }
     }
 
@@ -34,12 +32,13 @@ public class ContentDisposition: ObservableObject, Equatable {
         self.bounds = Bounds(left: left, right: right, bottom: bottom, top: top)
     }
 
-    convenience public init() {
-        self.init(left: 0.0, right: 1.0, bottom: 0.0, top: 1.0)
+    public init() {
+        self.bounds = Bounds(left: 0.0, right: 1.0, bottom: 0.0, top: 1.0)
     }
 
-    convenience public init(left: Double?, right: Double?, bottom: Double?, top: Double?) {
-        self.init(left: left ?? 0.0, right: right ?? 1.0, bottom: bottom ?? 0.0, top: top ?? 1.0)
+    public init(left: Double?, right: Double?, bottom: Double?, top: Double?) {
+        self.bounds = Bounds(
+            left: left ?? 0.0, right: right ?? 1.0, bottom: bottom ?? 0.0, top: top ?? 1.0)
     }
 
     /// Returns a content disposition with positive width and height.
