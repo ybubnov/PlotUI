@@ -15,7 +15,7 @@ final class BarViewTests: XCTestCase {
             ContentDisposition.Bounds(left: -3.0, right: 2.0, bottom: -30.0, top: 40.0))
     }
 
-    func testCustomDomainAndImage() throws {
+    func testCustomDisposition() throws {
         let disposition = ContentDisposition(left: -10.0, right: 10.0, bottom: 5.0, top: 5.0)
 
         let bar = BarView(x: [0.0, -50.0], y: [10, 20], disposition: disposition)

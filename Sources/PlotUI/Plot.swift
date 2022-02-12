@@ -13,7 +13,7 @@ extension StrokeStyle {
 
 public struct PlotAxis<Tick: TickShape>: View {
     /// The list of tick locations relative to the scaled axis.
-    private var ticks: [CGFloat] = []
+    private var ticks: [Double] = []
     private var tickStyle: StrokeStyle = .tinyDashed
 
     /// The labels to place at the given ticks locations.
@@ -22,9 +22,10 @@ public struct PlotAxis<Tick: TickShape>: View {
     private var labelStyle: AnyTickLabelStyle
 
     @EnvironmentObject var disposition: ContentDisposition
+    @Environment(\.viewport) var viewport
 
     internal init<S: TickLabelStyle>(
-        _ ticks: [CGFloat] = [],
+        _ ticks: [Double] = [],
         _ tickStyle: StrokeStyle = .tinyDashed,
         _ labels: [LocalizedStringKey] = [],
         _ labelStyle: S
@@ -50,13 +51,13 @@ public struct PlotAxis<Tick: TickShape>: View {
 
     public var body: some View {
         ForEach(ticks.indices, id: \.self) { i in
-            Tick(disposition, at: ticks[i])
+            Tick(disposition, viewport, at: ticks[i])
                 .stroke(style: tickStyle)
                 .tickLabel(subscriptLabel(i), style: labelStyle)
         }
     }
 
-    public func ticks<S: Sequence>(_ ticks: S) -> Self where S.Element == CGFloat {
+    public func ticks<S: Sequence>(_ ticks: S) -> Self where S.Element == Double {
         return Self(Array(ticks), tickStyle, labels, labelStyle)
     }
 
@@ -74,8 +75,7 @@ public struct PlotAxis<Tick: TickShape>: View {
 }
 
 public struct PlotView: View {
-
-    @StateObject var disposition = ContentDisposition()
+    @StateObject private var disposition = ContentDisposition()
 
     public var content: AnyFuncView
 
@@ -100,9 +100,8 @@ public struct PlotView: View {
         .onAppear(perform: {
             disposition.bounds = content.disposition.bounds
         })
-        .padding(100)
-        .background(Color.white)
         .foregroundColor(.gray)
+        .viewport([.bottom, .trailing], 30)
         .environmentObject(disposition)
     }
 }
@@ -116,8 +115,8 @@ extension PlotView {
         let numXTicks = 10
         let numYTicks = 4
 
-        let xInterval = Double(self.content.disposition.bounds.width) / Double(numXTicks)
-        let yInterval = Double(self.content.disposition.bounds.height) / Double(numYTicks)
+        let xInterval = self.content.disposition.bounds.width / Double(numXTicks)
+        let yInterval = self.content.disposition.bounds.height / Double(numYTicks)
 
         let xticks = (0...numXTicks).map { tick in
             self.content.disposition.bounds.left + Double(tick) * xInterval
@@ -132,21 +131,21 @@ extension PlotView {
         let xlabels = xticks.map(asLabel)
         let ylabels = yticks.map(asLabel)
 
-        self.xaxis = xaxis.ticks(Array.make(xticks)).labels(xlabels)
-        self.yaxis = yaxis.ticks(Array.make(yticks)).labels(ylabels).tickStyle(.tiny)
+        self.xaxis = xaxis.ticks(xticks).labels(xlabels)
+        self.yaxis = yaxis.ticks(yticks).labels(ylabels).tickStyle(.tiny)
     }
 }
 
-extension Array where Self.Element == CGFloat {
+extension Array where Self.Element == Double {
 
     public static func make<S: Sequence, E: BinaryInteger>(_ elements: S) -> Self
     where S.Element == E {
-        return elements.map { e in CGFloat(e) }
+        return elements.map { e in Double(e) }
     }
 
     public static func make<S: Sequence, E: BinaryFloatingPoint>(_ elements: S) -> Self
     where S.Element == E {
-        return elements.map { e in CGFloat(e) }
+        return elements.map { e in Double(e) }
     }
 }
 
@@ -206,18 +205,14 @@ struct PlotViewPreview: PreviewProvider {
             BarView(
                 x: [0, 1, 2, 3, 4, 5, 5.5],
                 y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
-                //                domain: -3.0...7.0,
-                //                image: 0.0...60.0
-                //                xmin: -3,
-                //                xmax: 7,
-                //                ymin: 0,
-                //                ymax: 60
             )
             .fill(.green)
         }
         //        .horizontalTicks(-3...0)
-        //        .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
-        //        .verticalTicks([0, 20, 40, 60])
-        //        .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
+        //         .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
+        //         .verticalTicks([0, 20, 40, 60])
+        //         .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
+        .padding(100)
+        .background(Color.white)
     }
 }

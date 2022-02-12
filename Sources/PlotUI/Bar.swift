@@ -1,14 +1,70 @@
 import Foundation
 import SwiftUI
 
+public struct Viewport {
+    private var _rect: CGRect
 
+    init(_ frame: CGSize, _ edges: Edge.Set = .all, _ length: CGFloat) {
+        var origin = CGPoint()
+        var size = frame
+
+        if edges.contains(.trailing) {
+            size.width -= length
+        }
+        if edges.contains(.bottom) {
+            size.height -= length
+        }
+        if edges.contains(.leading) {
+            origin.x += length
+            size.width -= length
+        }
+        if edges.contains(.top) {
+            origin.y += length
+            size.height -= length
+        }
+
+        self._rect = CGRect(origin: origin, size: size)
+    }
+
+    init() {
+        self._rect = CGRect()
+    }
+
+    public var rect: CGRect { _rect }
+}
+
+extension CGSize: Comparable {
+    public static func < (lhs: CGSize, rhs: CGSize) -> Bool {
+        return (lhs.width * lhs.height) < (rhs.width * rhs.height)
+    }
+}
+
+struct ViewportEnvironmentKey: EnvironmentKey {
+    static var defaultValue: Viewport = Viewport()
+}
+
+extension EnvironmentValues {
+    public var viewport: Viewport {
+        get { self[ViewportEnvironmentKey.self] }
+        set { self[ViewportEnvironmentKey.self] = newValue }
+    }
+}
+
+extension View {
+    public func viewport(_ edges: Edge.Set = .all, _ length: CGFloat) -> some View {
+        GeometryReader { rect in
+            environment(\.viewport, Viewport(rect.size, edges, length))
+        }
+    }
+}
 
 public struct BarView<Style: ShapeStyle>: FuncView {
 
     private var x: [Double]
     private var y: [Double]
-
     private var _disposition: ContentDisposition
+
+    @Environment(\.viewport) var viewport
 
     // Fill style of the bars.
     private var fillStyle: Style
@@ -31,24 +87,25 @@ public struct BarView<Style: ShapeStyle>: FuncView {
 
     public var body: some View {
         GeometryReader { rect in
-            let width = max(0, rect.size.width - 40)
-            let height = max(0, rect.size.height - 40)
+            let width = viewport.rect.width
+            let height = viewport.rect.height
 
-            let xScale = width / CGFloat(disposition.bounds.width)
-            let yScale = height / CGFloat(disposition.bounds.height)
+            let xScale = CGFloat(width / disposition.bounds.width)
+            let yScale = CGFloat(height / disposition.bounds.height)
 
             let cornerSize = CGSize(width: radius, height: radius)
 
             Path { path in
                 x.indices.forEach { i in
-                    let xpos = (x[i] - disposition.bounds.bottom) * xScale
+
+                    let xpos = (x[i] - disposition.bounds.left) * xScale
                     let ypos = min(max(0, y[i] * yScale), height)
 
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
                     if (0...width).contains(xpos) {
-                        let x = xpos - self.width / 2
-                        let y = height - ypos
+                        let x = xpos - self.width / 2 + viewport.rect.minX
+                        let y = height - ypos + viewport.rect.minY
 
                         // TODO: what if the rectangle width out of the visible area?
                         let roundedRect = CGRect(x: x, y: y, width: self.width, height: ypos)
@@ -58,6 +115,7 @@ public struct BarView<Style: ShapeStyle>: FuncView {
                 }
             }
             .fill(fillStyle)
+
         }
     }
 }
@@ -74,9 +132,11 @@ extension BarView where Style == Color {
         // If data limits are not specified, try to calculate the maximum
         // value from the provided data array, then set to 1.0 if the array
         // is empty.
-        self._disposition = disposition ?? ContentDisposition(
-            left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
-        )
+        self._disposition =
+            disposition
+            ?? ContentDisposition(
+                left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
+            )
 
         // Set default fill style, which is just a gray color.
         self.fillStyle = .gray
@@ -98,5 +158,17 @@ extension BarView {
         var view = self
         view.width = width
         return view
+    }
+}
+
+struct BarViewPreview: PreviewProvider {
+    static var previews: some View {
+        BarView(
+            x: [0, 1, 2, 3, -4],
+            y: [10, 50, 30, 40, 5]
+        )
+        .fill(.green)
+        .viewport(.all, 40)
+        .frame(width: 500, height: 300)
     }
 }
