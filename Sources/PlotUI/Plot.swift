@@ -211,7 +211,7 @@ struct PlotViewPreview: PreviewProvider {
                 )
                 .fill(.green)
             }
-            .horizontalTicks([2, 3, 7])
+            .horizontalTicks([2, 3, 7, 5])
             .padding(100)
             .background(Color.white)
         }

@@ -101,20 +101,25 @@ public struct BarView<Style: ShapeStyle>: FuncView {
 
             Path { path in
                 x.indices.forEach { i in
-
                     let xpos = (x[i] - bounds.left) * xScale
                     let ypos = min(max(0, y[i] * yScale), height)
+
+                    let x = xpos - self.width / 2 + viewport.rect.minX
+                    let y = height - ypos + viewport.rect.minY
+
+                    // TODO: what if the rectangle width out of the visible area?
+                    let bar = CGRect(x: x, y: y, width: self.width, height: ypos)
+
+                    let sharpHeight = min(ypos, radius)
+                    let sharpOverlay = CGRect(
+                        x: x, y: y + ypos - sharpHeight, width: self.width, height: sharpHeight)
 
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
                     if (0...width).contains(xpos) {
-                        let x = xpos - self.width / 2 + viewport.rect.minX
-                        let y = height - ypos + viewport.rect.minY
-
-                        // TODO: what if the rectangle width out of the visible area?
-                        let roundedRect = CGRect(x: x, y: y, width: self.width, height: ypos)
-
-                        path.addRoundedRect(in: roundedRect, cornerSize: cornerSize)
+                        path.addRoundedRect(in: bar, cornerSize: cornerSize)
+                        path.addRect(sharpOverlay)
+                        path.closeSubpath()
                     }
                 }
             }
