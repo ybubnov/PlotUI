@@ -65,13 +65,16 @@ public struct BarView<Style: ShapeStyle>: FuncView {
     private var _disposition: ContentDisposition
 
     @Environment(\.viewport) var viewport
+    @Environment(\.contentDisposition) var contentDisposition
 
     // Fill style of the bars.
     private var fillStyle: Style
     private var radius: CGFloat = 2
     private var width: CGFloat = 5
 
-    public var disposition: ContentDisposition { _disposition }
+    public var disposition: ContentDisposition {
+        return contentDisposition.merge(_disposition)
+    }
 
     internal init(
         _ x: [Double],
@@ -89,16 +92,17 @@ public struct BarView<Style: ShapeStyle>: FuncView {
         GeometryReader { rect in
             let width = viewport.rect.width
             let height = viewport.rect.height
+            let bounds = disposition.bounds
 
-            let xScale = CGFloat(width / disposition.bounds.width)
-            let yScale = CGFloat(height / disposition.bounds.height)
+            let xScale = CGFloat(width / bounds.width)
+            let yScale = CGFloat(height / bounds.height)
 
             let cornerSize = CGSize(width: radius, height: radius)
 
             Path { path in
                 x.indices.forEach { i in
 
-                    let xpos = (x[i] - disposition.bounds.left) * xScale
+                    let xpos = (x[i] - bounds.left) * xScale
                     let ypos = min(max(0, y[i] * yScale), height)
 
                     // Draw the bar only if its x-axis position is within the view range.
@@ -115,28 +119,18 @@ public struct BarView<Style: ShapeStyle>: FuncView {
                 }
             }
             .fill(fillStyle)
-
         }
     }
 }
 
 extension BarView where Style == Color {
-    public init(
-        x: [Double],
-        y: [Double],
-        disposition: ContentDisposition? = nil
-    ) {
+    public init(x: [Double], y: [Double]) {
         self.x = x
         self.y = y
 
-        // If data limits are not specified, try to calculate the maximum
-        // value from the provided data array, then set to 1.0 if the array
-        // is empty.
-        self._disposition =
-            disposition
-            ?? ContentDisposition(
-                left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
-            )
+        self._disposition = ContentDisposition(
+            left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
+        )
 
         // Set default fill style, which is just a gray color.
         self.fillStyle = .gray
@@ -165,10 +159,11 @@ struct BarViewPreview: PreviewProvider {
     static var previews: some View {
         BarView(
             x: [0, 1, 2, 3, -4],
-            y: [10, 50, 30, 40, 5]
+            y: [10, 40, 30, 50, 5]
         )
         .fill(.green)
         .viewport(.all, 40)
+        .contentDisposition(left: -12, right: 5)
         .frame(width: 500, height: 300)
     }
 }

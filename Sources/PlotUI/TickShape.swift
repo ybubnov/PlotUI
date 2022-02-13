@@ -23,8 +23,10 @@ public struct VerticalTick: TickShape {
         let x = viewport.rect.minX + (at - disposition.bounds.left) * xScale
 
         return Path { path in
-            path.move(to: CGPoint(x: x, y: viewport.rect.minY))
-            path.addLine(to: CGPoint(x: x, y: rect.size.height))
+            if (viewport.rect.minX...viewport.rect.maxX).contains(x) {
+                path.move(to: CGPoint(x: x, y: viewport.rect.minY))
+                path.addLine(to: CGPoint(x: x, y: rect.size.height))
+            }
         }
     }
 }
