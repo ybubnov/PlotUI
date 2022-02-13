@@ -18,10 +18,9 @@ public struct PlotAxis<Tick: TickShape>: View {
 
     /// The labels to place at the given ticks locations.
     private var labels: [LocalizedStringKey] = []
-
     private var labelStyle: AnyTickLabelStyle
 
-    @EnvironmentObject var disposition: ContentDisposition
+    @Environment(\.contentDisposition) var disposition
     @Environment(\.viewport) var viewport
 
     internal init<S: TickLabelStyle>(
@@ -58,7 +57,7 @@ public struct PlotAxis<Tick: TickShape>: View {
     }
 
     public func ticks<S: Sequence>(_ ticks: S) -> Self where S.Element == Double {
-        return Self(Array(ticks), tickStyle, labels, labelStyle)
+        return Self(Array(ticks), tickStyle, [], labelStyle)
     }
 
     public func tickStyle(_ style: StrokeStyle) -> Self {
@@ -75,7 +74,7 @@ public struct PlotAxis<Tick: TickShape>: View {
 }
 
 public struct PlotView: View {
-    @StateObject private var disposition = ContentDisposition()
+    @Environment(\.contentDisposition) var contentDisposition
 
     public var content: AnyFuncView
 
@@ -97,12 +96,22 @@ public struct PlotView: View {
             yaxis
             content
         }
-        .onAppear(perform: {
-            disposition.bounds = content.disposition.bounds
-        })
         .foregroundColor(.gray)
         .viewport([.bottom, .trailing], 30)
-        .environmentObject(disposition)
+        .contentDisposition(contentDisposition.merge(content.disposition))
+    }
+
+    private func makeAxis<
+        Tick: TickShape,
+        T: Sequence
+    >(_ axis: PlotAxis<Tick>, _ ticks: T, _ labels: [LocalizedStringKey]? = nil) -> PlotAxis<Tick>
+    where T.Element == Double {
+        let asLabel = { (tick: Double) -> LocalizedStringKey in
+            LocalizedStringKey(String(format: "%.2f", tick))
+        }
+
+        let labels = ticks.map(asLabel)
+        return axis.ticks(ticks).labels(labels)
     }
 }
 
@@ -115,35 +124,21 @@ extension PlotView {
         let numXTicks = 10
         let numYTicks = 4
 
-        let xInterval = self.content.disposition.bounds.width / Double(numXTicks)
-        let yInterval = self.content.disposition.bounds.height / Double(numYTicks)
+        let (xticks, yticks) = self.content.disposition[0...numXTicks, 0...numYTicks]
 
-        let xticks = (0...numXTicks).map { tick in
-            self.content.disposition.bounds.left + Double(tick) * xInterval
-        }
-        let yticks = (0...numYTicks).map { tick in
-            self.content.disposition.bounds.bottom + Double(tick) * yInterval
-        }
-
-        let asLabel = { (tick: Double) -> LocalizedStringKey in
-            LocalizedStringKey(String(format: "%.2f", tick))
-        }
-        let xlabels = xticks.map(asLabel)
-        let ylabels = yticks.map(asLabel)
-
-        self.xaxis = xaxis.ticks(xticks).labels(xlabels)
-        self.yaxis = yaxis.ticks(yticks).labels(ylabels).tickStyle(.tiny)
+        self.xaxis = self.makeAxis(xaxis, xticks, [])
+        self.yaxis = self.makeAxis(yaxis, yticks, []).tickStyle(.tiny)
     }
 }
 
 extension Array where Self.Element == Double {
 
-    public static func make<S: Sequence, E: BinaryInteger>(_ elements: S) -> Self
+    static func asDouble<S: Sequence, E: BinaryInteger>(_ elements: S) -> Self
     where S.Element == E {
         return elements.map { e in Double(e) }
     }
 
-    public static func make<S: Sequence, E: BinaryFloatingPoint>(_ elements: S) -> Self
+    static func asDouble<S: Sequence, E: BinaryFloatingPoint>(_ elements: S) -> Self
     where S.Element == E {
         return elements.map { e in Double(e) }
     }
@@ -154,23 +149,19 @@ extension PlotView {
     public func horizontalTicks<S: Sequence, Tick: BinaryInteger>(
         _ ticks: S, style: StrokeStyle = .tinyDashed
     ) -> Self where S.Element == Tick {
-
-        let axis = xaxis.ticks(Array.make(ticks)).tickStyle(style)
-        return Self(axis, yaxis, content)
+        let newAxis = makeAxis(xaxis, Array.asDouble(ticks))
+        return Self(newAxis.tickStyle(style), yaxis, content)
     }
 
     public func horizontalLabels<S: Sequence>(_ labels: S) -> Self
     where S.Element == LocalizedStringKey {
-        let axis = xaxis.labels(labels)
-        return Self(axis, yaxis, content)
+        return Self(xaxis.labels(labels), yaxis, content)
     }
 
     public func horizontalLabels<S: Sequence, LabelStyle: TickLabelStyle>(
         _ labels: S, style: LabelStyle
     ) -> Self where S.Element == LocalizedStringKey {
-
-        let axis = xaxis.labels(labels).labelStyle(style)
-        return Self(axis, yaxis, content)
+        return Self(xaxis.labels(labels).labelStyle(style), yaxis, content)
     }
 }
 
@@ -179,40 +170,52 @@ extension PlotView {
     public func verticalTicks<S: Sequence, Tick: BinaryInteger>(
         _ ticks: S, style: StrokeStyle = .tiny
     ) -> Self where S.Element == Tick {
-
-        let axis = yaxis.ticks(Array.make(ticks)).tickStyle(style)
-        return Self(xaxis, axis, content)
+        let newAxis = makeAxis(yaxis, Array.asDouble(ticks))
+        return Self(xaxis, newAxis.tickStyle(style), content)
     }
 
     public func verticalLabels<S: Sequence>(_ labels: S) -> Self
     where S.Element == LocalizedStringKey {
-        let axis = yaxis.labels(labels)
-        return Self(xaxis, axis, content)
+        return Self(xaxis, yaxis.labels(labels), content)
     }
 
     public func verticalLabels<S: Sequence, LabelStyle: TickLabelStyle>(
         _ labels: S, style: LabelStyle
     ) -> Self where S.Element == LocalizedStringKey {
-
-        let axis = yaxis.labels(labels).labelStyle(style)
-        return Self(xaxis, axis, content)
+        return Self(xaxis, yaxis.labels(labels).labelStyle(style), content)
     }
 }
 
 struct PlotViewPreview: PreviewProvider {
     static var previews: some View {
-        PlotView {
-            BarView(
-                x: [0, 1, 2, 3, 4, 5, 5.5],
-                y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
-            )
-            .fill(.green)
+        VStack {
+            PlotView {
+                BarView(
+                    x: [0, 1, 2, 3, 4, 5, 5.5],
+                    y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                )
+                .fill(.green)
+            }
+            .horizontalTicks([2, 3, 7])
+            .contentDisposition(right: 15)
+            //         .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
+            //         .verticalTicks([0, 20, 40, 60])
+            //         .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
+            .padding(100)
+            .background(Color.white)
+
+            PlotView {
+                BarView(
+                    x: [-5, 1, 2, 3, 4, 5, 5.5],
+                    y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                )
+                .fill(.green)
+            }
+            .horizontalTicks([2, 3, 7])
+            .padding(100)
+            .background(Color.white)
         }
-        //        .horizontalTicks(-3...0)
-        //         .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
-        //         .verticalTicks([0, 20, 40, 60])
-        //         .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
-        .padding(100)
-        .background(Color.white)
+        .contentDisposition(left: -5, top: 150)
+        .frame(height: 800)
     }
 }

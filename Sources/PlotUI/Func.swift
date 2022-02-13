@@ -1,12 +1,26 @@
 import Foundation
 import SwiftUI
 
-public class ContentDisposition: ObservableObject, Equatable {
+public struct ContentDisposition: Equatable {
     public struct Bounds: Equatable {
-        public var left: Double
-        public var right: Double
-        public var bottom: Double
-        public var top: Double
+        internal var _left: Double?
+        internal var _right: Double?
+        internal var _bottom: Double?
+        internal var _top: Double?
+
+        public var left: Double { _left ?? 0 }
+        public var right: Double { max(_right ?? 1, left + 1) }
+        public var bottom: Double { _bottom ?? 0 }
+        public var top: Double { max(_top ?? 1, bottom + 1) }
+
+        public init(
+            left: Double? = nil, right: Double? = nil, bottom: Double? = nil, top: Double? = nil
+        ) {
+            _left = left
+            _right = right
+            _bottom = bottom
+            _top = top
+        }
 
         /// Returns the width of the bounds.
         public var width: Double { abs(right - left) }
@@ -22,23 +36,16 @@ public class ContentDisposition: ObservableObject, Equatable {
         }
     }
 
-    @Published var bounds: Bounds
+    public var bounds: Bounds
 
     public init(bounds: Bounds) {
         self.bounds = bounds
     }
 
-    public init(left: Double, right: Double, bottom: Double, top: Double) {
+    public init(
+        left: Double? = nil, right: Double? = nil, bottom: Double? = nil, top: Double? = nil
+    ) {
         self.bounds = Bounds(left: left, right: right, bottom: bottom, top: top)
-    }
-
-    public init() {
-        self.bounds = Bounds(left: 0.0, right: 1.0, bottom: 0.0, top: 1.0)
-    }
-
-    public init(left: Double?, right: Double?, bottom: Double?, top: Double?) {
-        self.bounds = Bounds(
-            left: left ?? 0.0, right: right ?? 1.0, bottom: bottom ?? 0.0, top: top ?? 1.0)
     }
 
     /// Returns a content disposition with positive width and height.
@@ -49,6 +56,59 @@ public class ContentDisposition: ObservableObject, Equatable {
     /// Returns a Boolean value indicating whether two values are equal.
     public static func == (lhs: ContentDisposition, rhs: ContentDisposition) -> Bool {
         return lhs.bounds == rhs.bounds
+    }
+
+    public func horizontalOffset(at: Int, partition: Int) -> Double {
+        return bounds.left + bounds.width / Double(partition) * Double(at)
+    }
+
+    public func verticalOffset(at: Int, partition: Int) -> Double {
+        return bounds.bottom + bounds.height / Double(partition) * Double(at)
+    }
+
+    public subscript<H: Sequence, V: Sequence>(h: H, v: V) -> ([Double], [Double])
+    where H.Element == Int, V.Element == Int {
+        let hpartition = h.max() ?? 1
+        let vpartition = v.max() ?? 1
+
+        let hslice = h.map { at in horizontalOffset(at: at, partition: hpartition) }
+        let vslice = v.map { at in verticalOffset(at: at, partition: vpartition) }
+        return (hslice, vslice)
+    }
+
+    public func merge(_ other: ContentDisposition) -> ContentDisposition {
+        return ContentDisposition(
+            left: bounds._left ?? other.bounds._left,
+            right: bounds._right ?? other.bounds._right,
+            bottom: bounds._bottom ?? other.bounds._bottom,
+            top: bounds._top ?? other.bounds._top
+        )
+    }
+}
+
+struct ContentDispositionEnvironmentKey: EnvironmentKey {
+    static var defaultValue = ContentDisposition()
+}
+
+extension EnvironmentValues {
+    public var contentDisposition: ContentDisposition {
+        get { self[ContentDispositionEnvironmentKey.self] }
+        set { self[ContentDispositionEnvironmentKey.self] = newValue }
+    }
+}
+
+extension View {
+    public func contentDisposition(
+        left: Double? = nil, right: Double? = nil, bottom: Double? = nil, top: Double? = nil
+    ) -> some View {
+        @Environment(\.contentDisposition) var oldValue
+        let newValue = ContentDisposition(left: left, right: right, bottom: bottom, top: top)
+
+        return environment(\.contentDisposition, oldValue.merge(newValue))
+    }
+
+    public func contentDisposition(_ disposition: ContentDisposition) -> some View {
+        return environment(\.contentDisposition, disposition)
     }
 }
 

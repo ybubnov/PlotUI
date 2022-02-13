@@ -7,19 +7,12 @@ import XCTest
 extension BarView: Inspectable {}
 
 final class BarViewTests: XCTestCase {
-    func testComputedDisposition() throws {
+    func testContentDisposition() throws {
         let bar = BarView(x: [0.0, -1.0, 2.0, -3.0], y: [-30.0, 20.0, 10.0, 40.0])
 
         XCTAssertEqual(
-            bar.disposition.bounds,
-            ContentDisposition.Bounds(left: -3.0, right: 2.0, bottom: -30.0, top: 40.0))
-    }
-
-    func testCustomDisposition() throws {
-        let disposition = ContentDisposition(left: -10.0, right: 10.0, bottom: 5.0, top: 5.0)
-
-        let bar = BarView(x: [0.0, -50.0], y: [10, 20], disposition: disposition)
-        XCTAssertEqual(bar.disposition, disposition)
+            bar.disposition,
+            ContentDisposition(left: -3.0, right: 2.0, bottom: -30.0, top: 40.0))
     }
 
     func testFill() throws {
