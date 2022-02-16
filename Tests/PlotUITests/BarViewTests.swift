@@ -23,7 +23,7 @@ final class BarViewTests: XCTestCase {
         XCTAssertEqual(try shape.fillShapeStyle(Color.self), Color.gray)
 
         // Modify the default color, and ensure it was changed.
-        bar = bar.fill(Color.red)
+        bar = bar.barColor(.red)
         shape = try bar.inspect().find(ViewType.GeometryReader.self).shape()
         XCTAssertEqual(try shape.fillShapeStyle(Color.self), Color.red)
     }

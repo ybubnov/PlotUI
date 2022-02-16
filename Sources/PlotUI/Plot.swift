@@ -194,11 +194,12 @@ struct PlotViewPreview: PreviewProvider {
                     x: [0, 1, 2, 3, 4, 5, 5.5],
                     y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
                 )
-                .fill(.green)
+                .barWidth(10)
+                .barColor(.blue)
             }
             .horizontalTicks([2, 3, 7])
+            //            .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
             .contentDisposition(right: 15)
-            //         .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
             //         .verticalTicks([0, 20, 40, 60])
             //         .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
             .padding(100)
@@ -209,7 +210,7 @@ struct PlotViewPreview: PreviewProvider {
                     x: [-5, 1, 2, 3, 4, 5, 5.5],
                     y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
                 )
-                .fill(.green)
+                .barColor(.green)
             }
             .horizontalTicks([2, 3, 7, 5])
             .padding(100)
