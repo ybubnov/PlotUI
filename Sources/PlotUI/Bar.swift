@@ -58,7 +58,7 @@ extension View {
     }
 }
 
-public struct BarView<Style: ShapeStyle>: FuncView {
+public struct BarView: FuncView {
 
     private var x: [Double]
     private var y: [Double]
@@ -68,9 +68,9 @@ public struct BarView<Style: ShapeStyle>: FuncView {
     @Environment(\.contentDisposition) var contentDisposition
 
     // Fill style of the bars.
-    private var fillStyle: Style
     private var radius: CGFloat = 2
     private var width: CGFloat = 5
+    private var color: Color = .gray
 
     public var disposition: ContentDisposition {
         return contentDisposition.merge(_disposition)
@@ -79,13 +79,20 @@ public struct BarView<Style: ShapeStyle>: FuncView {
     internal init(
         _ x: [Double],
         _ y: [Double],
-        _ disposition: ContentDisposition,
-        _ fillStyle: Style
+        _ disposition: ContentDisposition
     ) {
         self.x = x
         self.y = y
         self._disposition = disposition
-        self.fillStyle = fillStyle
+    }
+
+    public init(x: [Double], y: [Double]) {
+        self.x = x
+        self.y = y
+
+        self._disposition = ContentDisposition(
+            left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
+        )
     }
 
     public var body: some View {
@@ -123,30 +130,12 @@ public struct BarView<Style: ShapeStyle>: FuncView {
                     }
                 }
             }
-            .fill(fillStyle)
+            .fill(color)
         }
     }
 }
 
-extension BarView where Style == Color {
-    public init(x: [Double], y: [Double]) {
-        self.x = x
-        self.y = y
-
-        self._disposition = ContentDisposition(
-            left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
-        )
-
-        // Set default fill style, which is just a gray color.
-        self.fillStyle = .gray
-    }
-}
-
 extension BarView {
-    public func fill<S: ShapeStyle>(_ style: S) -> BarView<S> {
-        return BarView<S>(x, y, disposition, style)
-    }
-
     public func barCornerRadius(_ radius: CGFloat) -> BarView {
         var view = self
         view.radius = radius
@@ -158,6 +147,12 @@ extension BarView {
         view.width = width
         return view
     }
+
+    public func barColor(_ color: Color) -> BarView {
+        var view = self
+        view.color = color
+        return view
+    }
 }
 
 struct BarViewPreview: PreviewProvider {
@@ -166,7 +161,7 @@ struct BarViewPreview: PreviewProvider {
             x: [0, 1, 2, 3, -4],
             y: [10, 40, 30, 50, 5]
         )
-        .fill(.green)
+        .barColor(.green)
         .viewport(.all, 40)
         .contentDisposition(left: -12, right: 5)
         .frame(width: 500, height: 300)
