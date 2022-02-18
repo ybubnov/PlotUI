@@ -1,42 +1,21 @@
 import Foundation
 import SwiftUI
 
-extension StrokeStyle {
-    static public var tinyDashed: StrokeStyle {
-        StrokeStyle(lineWidth: 0.2, dash: [2])
-    }
-
-    static public var tiny: StrokeStyle {
-        StrokeStyle(lineWidth: 0.2)
-    }
-}
-
-public struct PlotAxis<Tick: TickShape>: View {
+public struct PlotAxis: View {
     /// The list of tick locations relative to the scaled axis.
     private var ticks: [Double] = []
-    private var tickStyle: StrokeStyle = .tinyDashed
 
     /// The labels to place at the given ticks locations.
     private var labels: [LocalizedStringKey] = []
-    private var labelStyle: AnyTickLabelStyle
 
-    @Environment(\.contentDisposition) var disposition
-    @Environment(\.viewport) var viewport
+    private var orientation: TickOrientation
 
-    internal init<S: TickLabelStyle>(
-        _ ticks: [Double] = [],
-        _ tickStyle: StrokeStyle = .tinyDashed,
-        _ labels: [LocalizedStringKey] = [],
-        _ labelStyle: S
+    public init(
+        _ orientation: TickOrientation, ticks: [Double] = [], labels: [LocalizedStringKey] = []
     ) {
+        self.orientation = orientation
         self.ticks = ticks
         self.labels = labels
-        self.tickStyle = tickStyle
-        self.labelStyle = AnyTickLabelStyle(labelStyle)
-    }
-
-    public init<S: TickLabelStyle>(labelStyle: S) {
-        self.labelStyle = AnyTickLabelStyle(labelStyle)
     }
 
     private func subscriptLabel(_ index: Int, defaultValue: LocalizedStringKey = "")
@@ -50,43 +29,33 @@ public struct PlotAxis<Tick: TickShape>: View {
 
     public var body: some View {
         ForEach(ticks.indices, id: \.self) { i in
-            Tick(disposition, viewport, at: ticks[i])
-                .stroke(style: tickStyle)
-                .tickLabel(subscriptLabel(i), style: labelStyle)
+            Tick(subscriptLabel(i), orientation: orientation, value: ticks[i])
         }
     }
 
-    public func ticks<S: Sequence>(_ ticks: S) -> Self where S.Element == Double {
-        return Self(Array(ticks), tickStyle, [], labelStyle)
-    }
-
-    public func tickStyle(_ style: StrokeStyle) -> Self {
-        return Self(ticks, style, labels, labelStyle)
-    }
-
-    public func labels<S: Sequence>(_ labels: S) -> Self where S.Element == LocalizedStringKey {
-        return Self(ticks, tickStyle, Array(labels), labelStyle)
-    }
-
-    public func labelStyle<S: TickLabelStyle>(_ style: S) -> Self {
-        return Self<Tick>(ticks, tickStyle, labels, style)
-    }
+    //    public func ticks<S: Sequence>(_ ticks: S) -> Self where S.Element == Double {
+    //        return Self(ticks: Array(ticks), labels: [])
+    //    }
+    //
+    //    public func labels<S: Sequence>(_ labels: S) -> Self where S.Element == LocalizedStringKey {
+    //        return Self(ticks: ticks, labels: Array(labels))
+    //    }
 }
 
 public struct PlotView: View {
     @Environment(\.contentDisposition) var contentDisposition
+    //    @Environment(\.horizontalLabelStyle) var hLabelStyle
+    @Environment(\.horizontalTickStyle) var hTickStyle
+    //    @Environment(\.verticalLabelStyle) var vLabelStyle
+    @Environment(\.verticalTickStyle) var vTickStyle
 
-    public var content: AnyFuncView
+    private var xaxis: PlotAxis
+    private var yaxis: PlotAxis
+    private var content: AnyFuncView
 
-    public typealias XAxis = PlotAxis<VerticalTick>
-    public typealias YAxis = PlotAxis<HorizontalTick>
-
-    private var xaxis: XAxis
-    private var yaxis: YAxis
-
-    internal init<Content: FuncView>(_ xaxis: XAxis, _ yaxis: YAxis, _ content: Content) {
+    internal init<Content: FuncView>(_ xaxis: PlotAxis, _ yaxis: PlotAxis, _ content: Content) {
         self.xaxis = xaxis
-        self.yaxis = yaxis
+        self.yaxis = xaxis
         self.content = AnyFuncView(content)
     }
 
@@ -95,6 +64,10 @@ public struct PlotView: View {
             xaxis
             yaxis
             content
+            //            VStack{
+            //                Text(String(describing: contentDisposition.bounds))
+            //                Text(String(describing: content.disposition.bounds))
+            //            }
         }
         .foregroundColor(.gray)
         .viewport([.bottom, .trailing], 30)
@@ -102,32 +75,31 @@ public struct PlotView: View {
     }
 
     private func makeAxis<
-        Tick: TickShape,
-        T: Sequence
-    >(_ axis: PlotAxis<Tick>, _ ticks: T, _ labels: [LocalizedStringKey]? = nil) -> PlotAxis<Tick>
-    where T.Element == Double {
+        S: Sequence
+    >(_ orientation: TickOrientation, _ ticks: S, _ labels: [LocalizedStringKey] = []) -> PlotAxis
+    where S.Element == Double {
         let asLabel = { (tick: Double) -> LocalizedStringKey in
             LocalizedStringKey(String(format: "%.2f", tick))
         }
 
         let labels = ticks.map(asLabel)
-        return axis.ticks(ticks).labels(labels)
+        return PlotAxis(orientation, ticks: Array(ticks), labels: labels)
     }
 }
 
 extension PlotView {
     public init<Content: FuncView>(@ViewBuilder content: () -> Content) {
         self.content = AnyFuncView(content())
-        self.xaxis = XAxis(labelStyle: .bottomTrailing)
-        self.yaxis = YAxis(labelStyle: .trailing)
+        self.xaxis = PlotAxis(.vertical)
+        self.yaxis = PlotAxis(.horizontal)
 
         let numXTicks = 10
         let numYTicks = 4
 
         let (xticks, yticks) = self.content.disposition[0...numXTicks, 0...numYTicks]
 
-        self.xaxis = self.makeAxis(xaxis, xticks, [])
-        self.yaxis = self.makeAxis(yaxis, yticks, []).tickStyle(.tiny)
+        self.xaxis = makeAxis(.vertical, xticks, [])
+        self.yaxis = makeAxis(.horizontal, yticks, [])
     }
 }
 
@@ -144,6 +116,7 @@ extension Array where Self.Element == Double {
     }
 }
 
+/*
 extension PlotView {
 
     public func horizontalTicks<S: Sequence, Tick: BinaryInteger>(
@@ -185,6 +158,7 @@ extension PlotView {
         return Self(xaxis, yaxis.labels(labels).labelStyle(style), content)
     }
 }
+ */
 
 struct PlotViewPreview: PreviewProvider {
     static var previews: some View {
@@ -197,11 +171,13 @@ struct PlotViewPreview: PreviewProvider {
                 .barWidth(10)
                 .barColor(.blue)
             }
-            .horizontalTicks([2, 3, 7])
+            //            .plotTicks()
+            //            .horizontalTicks([2, 3, 7])
             //            .horizontalLabels(["-3", "-2", "-1", "0"], style: .bottom)
-            .contentDisposition(right: 15)
-            //         .verticalTicks([0, 20, 40, 60])
-            //         .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
+            .contentDisposition(right: 7)
+            //            .verticalTickLabelStyle(.trailing)
+            //            .verticalTicks([0, 20, 40, 60])
+            //            .verticalLabels(["0m", "20m", "40m", "60m", "80m"])
             .padding(100)
             .background(Color.white)
 
@@ -212,7 +188,8 @@ struct PlotViewPreview: PreviewProvider {
                 )
                 .barColor(.green)
             }
-            .horizontalTicks([2, 3, 7, 5])
+            //            .horizontalTicks([2, 3, 7, 5])
+            //            .contentDisposition(left: -10)
             .padding(100)
             .background(Color.white)
         }

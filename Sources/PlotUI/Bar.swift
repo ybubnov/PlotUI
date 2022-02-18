@@ -3,6 +3,7 @@ import SwiftUI
 
 public struct Viewport {
     private var _rect: CGRect
+    private var _frame: CGSize
 
     init(_ frame: CGSize, _ edges: Edge.Set = .all, _ length: CGFloat) {
         var origin = CGPoint()
@@ -24,13 +25,17 @@ public struct Viewport {
         }
 
         self._rect = CGRect(origin: origin, size: size)
+        self._frame = frame
     }
 
     init() {
         self._rect = CGRect()
+        self._frame = CGSize()
     }
 
     public var rect: CGRect { _rect }
+
+    public var frame: CGSize { _frame }
 }
 
 extension CGSize: Comparable {
