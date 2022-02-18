@@ -104,7 +104,7 @@ extension View {
         @Environment(\.contentDisposition) var oldValue
         let newValue = ContentDisposition(left: left, right: right, bottom: bottom, top: top)
 
-        return environment(\.contentDisposition, oldValue.merge(newValue))
+        return environment(\.contentDisposition, newValue.merge(oldValue))
     }
 
     public func contentDisposition(_ disposition: ContentDisposition) -> some View {
