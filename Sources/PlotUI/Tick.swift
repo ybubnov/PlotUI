@@ -29,7 +29,7 @@ public struct TickOrientation: Equatable {
         // All y-axis ticks are located on the horizontal axis, hence subtract the
         // size of y-tick from the width of this axis.
         let yScale = viewport.rect.height / disposition.bounds.height
-        let y = viewport.rect.height - (value - disposition.bounds.bottom) * yScale
+        let y = viewport.rect.maxY - (value - disposition.bounds.bottom) * yScale
 
         return Path { path in
             if (viewport.rect.minY...viewport.rect.maxY).contains(y) {

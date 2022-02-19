@@ -114,7 +114,7 @@ public struct BarView: FuncView {
             Path { path in
                 x.indices.forEach { i in
                     let xpos = (x[i] - bounds.left) * xScale
-                    let ypos = min(max(0, y[i] * yScale), height)
+                    let ypos = min(max(0, (y[i] - bounds.bottom) * yScale), height)
 
                     let x = xpos - self.width / 2 + viewport.rect.minX
                     let y = height - ypos + viewport.rect.minY
@@ -128,7 +128,7 @@ public struct BarView: FuncView {
 
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
-                    if (0...width).contains(xpos) {
+                    if (0...width).contains(xpos) && (0...height).contains(ypos) {
                         path.addRoundedRect(in: bar, cornerSize: cornerSize)
                         path.addRect(sharpOverlay)
                         path.closeSubpath()
@@ -168,7 +168,7 @@ struct BarViewPreview: PreviewProvider {
         )
         .barColor(.green)
         .viewport(.all, 40)
-        .contentDisposition(left: -12, right: 5)
+        .contentDisposition(bottom: 20)
         .frame(width: 500, height: 300)
     }
 }
