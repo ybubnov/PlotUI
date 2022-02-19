@@ -12,10 +12,10 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "PlotUI",
-            targets: ["PlotUI"]),
+            targets: ["PlotUI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/nalexn/ViewInspector", from: "0.9.0"),
+        .package(url: "https://github.com/nalexn/ViewInspector", from: "0.9.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
