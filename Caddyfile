@@ -1,0 +1,8 @@
+localhost:3000
+
+file_server
+
+rewrite /documentation/* /index.html
+rewrite /tutorials/* /index.html
+
+redir / /documentation/plotui 302
