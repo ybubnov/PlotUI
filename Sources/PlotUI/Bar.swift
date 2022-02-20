@@ -2,45 +2,24 @@ import Foundation
 import SwiftUI
 
 public struct Viewport {
-    private var _rect: CGRect
-    private var _frame: CGSize
+    private var insets: EdgeInsets
 
-    init(_ frame: CGSize, _ edges: Edge.Set = .all, _ length: CGFloat) {
-        var origin = CGPoint()
-        var size = frame
-
-        if edges.contains(.trailing) {
-            size.width -= length
-        }
-        if edges.contains(.bottom) {
-            size.height -= length
-        }
-        if edges.contains(.leading) {
-            origin.x += length
-            size.width -= length
-        }
-        if edges.contains(.top) {
-            origin.y += length
-            size.height -= length
-        }
-
-        self._rect = CGRect(origin: origin, size: size)
-        self._frame = frame
+    public init(_ insets: EdgeInsets) {
+        self.insets = insets
     }
 
-    init() {
-        self._rect = CGRect()
-        self._frame = CGSize()
+    public init() {
+        self.insets = EdgeInsets()
     }
 
-    public var rect: CGRect { _rect }
-
-    public var frame: CGSize { _frame }
-}
-
-extension CGSize: Comparable {
-    public static func < (lhs: CGSize, rhs: CGSize) -> Bool {
-        return (lhs.width * lhs.height) < (rhs.width * rhs.height)
+    /// Adjust the given rectangle by the edge insets.
+    public func inset(rect: CGRect) -> CGRect {
+        return CGRect(
+            x: rect.minX + insets.leading,
+            y: rect.minY + insets.top,
+            width: rect.width - insets.trailing,
+            height: rect.height - insets.bottom
+        )
     }
 }
 
@@ -56,10 +35,21 @@ extension EnvironmentValues {
 }
 
 extension View {
-    public func viewport(_ edges: Edge.Set = .all, _ length: CGFloat) -> some View {
-        GeometryReader { rect in
-            environment(\.viewport, Viewport(rect.size, edges, length))
-        }
+    public func viewport(_ insets: EdgeInsets) -> some View {
+        environment(\.viewport, Viewport(insets))
+    }
+
+    public func viewport(
+        top: CGFloat? = nil, leading: CGFloat? = nil, bottom: CGFloat? = nil,
+        trailing: CGFloat? = nil
+    ) -> some View {
+        let insets = EdgeInsets(
+            top: top ?? 0.0,
+            leading: leading ?? 0.0,
+            bottom: bottom ?? 0.0,
+            trailing: trailing ?? 0.0
+        )
+        return environment(\.viewport, Viewport(insets))
     }
 }
 
@@ -69,8 +59,8 @@ public struct BarView: FuncView {
     private var y: [Double]
     private var _disposition: ContentDisposition
 
-    @Environment(\.viewport) var viewport
-    @Environment(\.contentDisposition) var contentDisposition
+    @Environment(\.viewport) private var viewport
+    @Environment(\.contentDisposition) private var contentDisposition
 
     // Fill style of the bars.
     private var radius: CGFloat = 2
@@ -102,22 +92,21 @@ public struct BarView: FuncView {
 
     public var body: some View {
         GeometryReader { rect in
-            let width = viewport.rect.width
-            let height = viewport.rect.height
+            let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
             let bounds = disposition.bounds
 
-            let xScale = CGFloat(width / bounds.width)
-            let yScale = CGFloat(height / bounds.height)
+            let xScale = CGFloat(frame.width / bounds.width)
+            let yScale = CGFloat(frame.height / bounds.height)
 
             let cornerSize = CGSize(width: radius, height: radius)
 
             Path { path in
                 x.indices.forEach { i in
                     let xpos = (x[i] - bounds.left) * xScale
-                    let ypos = min(max(0, (y[i] - bounds.bottom) * yScale), height)
+                    let ypos = min(max(0, (y[i] - bounds.bottom) * yScale), frame.height)
 
-                    let x = xpos - self.width / 2 + viewport.rect.minX
-                    let y = height - ypos + viewport.rect.minY
+                    let x = xpos - self.width / 2 + frame.minX
+                    let y = frame.height - ypos + frame.minY
 
                     // TODO: what if the rectangle width out of the visible area?
                     let bar = CGRect(x: x, y: y, width: self.width, height: ypos)
@@ -128,7 +117,7 @@ public struct BarView: FuncView {
 
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
-                    if (0...width).contains(xpos) && (0...height).contains(ypos) {
+                    if frame.intersects(bar) {
                         path.addRoundedRect(in: bar, cornerSize: cornerSize)
                         path.addRect(sharpOverlay)
                         path.closeSubpath()
@@ -167,8 +156,8 @@ struct BarViewPreview: PreviewProvider {
             y: [10, 40, 30, 50, 5]
         )
         .barColor(.green)
-        .viewport(.all, 40)
-        .contentDisposition(bottom: 20)
+        .viewport(bottom: 10, trailing: 20)
+        .contentDisposition(bottom: 1)
         .frame(width: 500, height: 300)
     }
 }

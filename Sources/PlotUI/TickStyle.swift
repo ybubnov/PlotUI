@@ -112,68 +112,14 @@ public struct TrailingTickStyle: TickStyle {
     }
 }
 
-/*
-public struct Label: View {
-    public var label: LocalizedStringKey
-    public var tick: Path
-
-    @ScaledMetric(relativeTo: .body) var padding = 10
-
-    public init(_ label: LocalizedStringKey, tick: Path) {
-        self.label = label
-        self.tick = tick
-    }
-
-    public var body: some View {
-        Text(label)
-    }
-
-    public func labelStyle<S: TickStyle>(_ style: S) -> some View {
-        GeometryReader { rect in
-            style
-                .makeBody(
-                    configuration: TickStyleConfiguration(
-                        label: TickStyleConfiguration.Label(Text(label)),
-                        tick: tick.boundingRect,
-                        padding: padding
-                    )
-                )
-                .font(.system(.footnote).weight(.light))
-        }
-    }
-}
-*/
-
 extension Shape {
     private func boundingRect(_ rect: GeometryProxy) -> CGRect {
         return CGRect(origin: CGPoint(), size: rect.size)
     }
-
-    //    public func label<S: TickStyle>(_ label: LocalizedStringKey, style: S) -> some View {
-    //        GeometryReader { rect in
-    //            Label(label, tick: path(in: boundingRect(rect))).labelStyle(style)
-    //            self
-    //        }
-    //    }
-    //
-    //    public func label(_ label: LocalizedStringKey) -> some View {
-    //        GeometryReader { rect in
-    //            Label(label, tick: path(in: boundingRect(rect)))
-    //            self
-    //        }
-    //    }
 }
 
 struct TickStyleEnvironmentKey: EnvironmentKey {
     static var defaultValue: AnyTickStyle = AnyTickStyle(.bottom)
-}
-
-struct HorizontalTickStyleEnvironmentKey: EnvironmentKey {
-    static var defaultValue: AnyTickStyle = AnyTickStyle(.trailing)
-}
-
-struct VerticalTickStyleEnvironmentKey: EnvironmentKey {
-    static var defaultValue: AnyTickStyle = AnyTickStyle(.bottomTrailing)
 }
 
 extension EnvironmentValues {
@@ -181,28 +127,10 @@ extension EnvironmentValues {
         get { self[TickStyleEnvironmentKey.self] }
         set { self[TickStyleEnvironmentKey.self] = newValue }
     }
-
-    public var horizontalTickStyle: AnyTickStyle {
-        get { self[HorizontalTickStyleEnvironmentKey.self] }
-        set { self[HorizontalTickStyleEnvironmentKey.self] = newValue }
-    }
-
-    public var verticalTickStyle: AnyTickStyle {
-        get { self[VerticalTickStyleEnvironmentKey.self] }
-        set { self[VerticalTickStyleEnvironmentKey.self] = newValue }
-    }
 }
 
 extension View {
     public func tickStyle<S: TickStyle>(_ style: S) -> some View {
         environment(\.tickStyle, AnyTickStyle(style))
-    }
-
-    public func horizontalTickStyle<S: TickStyle>(_ style: S) -> some View {
-        environment(\.horizontalTickStyle, AnyTickStyle(style))
-    }
-
-    public func verticalTickStyle<S: TickStyle>(_ style: S) -> some View {
-        environment(\.verticalTickStyle, AnyTickStyle(style))
     }
 }
