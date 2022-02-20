@@ -1,43 +1,90 @@
 import Foundation
 import SwiftUI
 
-public struct TickOrientation: Equatable {
+public struct TickOrientationConfiguration {
+    let value: Double
 
-    typealias Body = (CGFloat, ContentDisposition, Viewport) -> Path
+    let contentDisposition: ContentDisposition
 
-    internal var axis: Axis.Set
-    internal var body: Body
+    let viewport: Viewport
 
-    internal init(_ axis: Axis.Set, @ViewBuilder body: @escaping Body) {
-        self.axis = axis
-        self.body = body
-    }
+    let size: CGSize
+}
 
-    public static let vertical = TickOrientation(.vertical) { value, disposition, viewport in
-        let xScale = viewport.rect.width / disposition.bounds.width
-        let x = viewport.rect.minX + (value - disposition.bounds.left) * xScale
+public protocol TickOrientationStyle {
+    typealias Configuration = TickOrientationConfiguration
 
-        return Path { path in
-            if (viewport.rect.minX...viewport.rect.maxX).contains(x) {
-                path.move(to: CGPoint(x: x, y: viewport.rect.minY))
-                path.addLine(to: CGPoint(x: x, y: viewport.frame.height))
-            }
+    func makeBody(configuration: Configuration) -> Path
+}
+
+public struct AnyTickOrientationStyle: TickOrientationStyle {
+
+    var _makeBody: (Configuration) -> Path
+
+    public init<S: TickOrientationStyle>(_ style: S) {
+        self._makeBody = { configuration in
+            style.makeBody(configuration: configuration)
         }
     }
 
-    public static let horizontal = TickOrientation(.horizontal) { value, disposition, viewport in
+    public func makeBody(configuration: Configuration) -> Path {
+        _makeBody(configuration)
+    }
+}
+
+struct VerticalTickOrientationStyle: TickOrientationStyle {
+    func makeBody(configuration: Configuration) -> Path {
+        let disposition = configuration.contentDisposition
+        let rect = configuration.viewport.inset(
+            rect: CGRect(origin: .zero, size: configuration.size)
+        )
+
+        let xScale = rect.width / disposition.bounds.width
+        let x = rect.minX + (configuration.value - disposition.bounds.left) * xScale
+
+        return Path { path in
+            if (rect.minX...rect.maxX).contains(x) {
+                path.move(to: CGPoint(x: x, y: rect.minY))
+                path.addLine(to: CGPoint(x: x, y: configuration.size.height))
+            }
+        }
+    }
+}
+
+struct HorizontalTickOrientationStyle: TickOrientationStyle {
+    func makeBody(configuration: Configuration) -> Path {
+        let disposition = configuration.contentDisposition
+        let rect = configuration.viewport.inset(
+            rect: CGRect(origin: .zero, size: configuration.size)
+        )
+
         // All y-axis ticks are located on the horizontal axis, hence subtract the
         // size of y-tick from the width of this axis.
-        let yScale = viewport.rect.height / disposition.bounds.height
-        let y = viewport.rect.maxY - (value - disposition.bounds.bottom) * yScale
+        let yScale = rect.height / disposition.bounds.height
+        let y = rect.maxY - (configuration.value - disposition.bounds.bottom) * yScale
 
         return Path { path in
-            if (viewport.rect.minY...viewport.rect.maxY).contains(y) {
-                path.move(to: CGPoint(x: viewport.rect.minX, y: y))
-                path.addLine(to: CGPoint(x: viewport.frame.width, y: y))
+            if (rect.minY...rect.maxY).contains(y) {
+                path.move(to: CGPoint(x: rect.minX, y: y))
+                path.addLine(to: CGPoint(x: configuration.size.width, y: y))
             }
         }
     }
+}
+
+public struct TickOrientation: Equatable {
+
+    internal var axis: Axis.Set
+    internal var style: AnyTickOrientationStyle
+
+    internal init<S: TickOrientationStyle>(_ axis: Axis.Set, _ style: S) {
+        self.axis = axis
+        self.style = AnyTickOrientationStyle(style)
+    }
+
+    public static let vertical = TickOrientation(.vertical, VerticalTickOrientationStyle())
+
+    public static let horizontal = TickOrientation(.horizontal, HorizontalTickOrientationStyle())
 
     public static func == (a: TickOrientation, b: TickOrientation) -> Bool {
         return a.axis == b.axis
@@ -64,18 +111,25 @@ public struct Tick: View {
 
     public var body: some View {
         GeometryReader { rect in
-            let path = orientation.body(value, disposition, viewport)
-            let configuration = TickStyleConfiguration(
-                label: TickStyleConfiguration.Label(Text(label)),
-                tick: path.boundingRect,
-                orientation: orientation,
-                padding: padding
+            let path = orientation.style.makeBody(
+                configuration: TickOrientationConfiguration(
+                    value: value,
+                    contentDisposition: disposition,
+                    viewport: viewport,
+                    size: rect.size
+                )
             )
 
             path.stroke(style: stroke)
-            style
-                .makeBody(configuration: configuration)
-                .font(.system(.footnote).weight(.light))
+            style.makeBody(
+                configuration: TickStyleConfiguration(
+                    label: TickStyleConfiguration.Label(Text(label)),
+                    tick: path.boundingRect,
+                    orientation: orientation,
+                    padding: padding
+                )
+            )
+            .font(.system(.footnote).weight(.light))
         }
     }
 }
@@ -85,7 +139,7 @@ struct VerticalTickPreview: PreviewProvider {
         GeometryReader { rect in
             Tick("5", orientation: .vertical, value: 5)
                 .contentDisposition(left: 0, right: 10, bottom: 0, top: 10)
-                .viewport([.top, .bottom, .leading], 40)
+                .tickInsets(top: 40, bottom: 40)
                 .tickStyle(.bottomTrailing)
                 .tickStroke(style: .tinyDashed)
         }
@@ -118,5 +172,16 @@ extension EnvironmentValues {
 extension View {
     public func tickStroke(style: StrokeStyle) -> some View {
         environment(\.tickStroke, style)
+    }
+
+    public func tickInsets(_ insets: EdgeInsets) -> some View {
+        return viewport(insets)
+    }
+
+    public func tickInsets(
+        top: CGFloat? = nil, leading: CGFloat? = nil, bottom: CGFloat? = nil,
+        trailing: CGFloat? = nil
+    ) -> some View {
+        return viewport(top: top, leading: leading, bottom: bottom, trailing: trailing)
     }
 }

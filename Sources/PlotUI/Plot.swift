@@ -73,7 +73,6 @@ public struct VAxis: View {
 
 public struct PlotView: View {
     @Environment(\.contentDisposition) var contentDisposition
-    @Environment(\.viewport) var viewport
 
     private var haxis: AnyView
     private var vaxis: AnyView
@@ -102,7 +101,6 @@ public struct PlotView: View {
             content
         }
         .foregroundColor(.gray)
-        .viewport([.bottom, .trailing], 30)
         .contentDisposition(contentDisposition.merge(content.disposition))
     }
 }
@@ -124,7 +122,7 @@ struct PlotViewPreview: PreviewProvider {
                     .tickStroke(style: .tinyDashed)
             }
             //            .contentDisposition(left: -4, right: 7)
-            .viewport(.trailing, 50)
+            .tickInsets(trailing: 30)
             .padding(100)
             .background(Color.white)
 
@@ -135,7 +133,7 @@ struct PlotViewPreview: PreviewProvider {
                 )
                 .barColor(.green)
             }
-            //                        .contentDisposition(left: -5)
+            .tickInsets(bottom: 20, trailing: 20)
             .padding(100)
             .background(Color.white)
         }
