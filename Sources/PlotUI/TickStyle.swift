@@ -75,14 +75,24 @@ public struct EmptyTickStyle: TickStyle {
 public struct BottomTickStyle: TickStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
-        let pos = CGSize(
-            width: configuration.tick.maxX,
-            height: configuration.tick.maxY + configuration.padding
+        if configuration.orientation == .vertical {
+            return AnyView(
+                configuration
+                    .label
+                    .position(
+                        x: configuration.tick.maxX,
+                        y: configuration.tick.maxY + configuration.padding
+                    )
+            )
+        }
+        return AnyView(
+            configuration
+                .label
+                .offset(
+                    x: configuration.tick.maxX + configuration.padding,
+                    y: configuration.tick.maxY
+                )
         )
-
-        configuration
-            .label
-            .position(x: pos.width, y: pos.height)
     }
 }
 
