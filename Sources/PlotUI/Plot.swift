@@ -285,45 +285,58 @@ public struct PlotView: View {
             vaxis
             content
         }
-        .foregroundColor(.gray)
         .contentDisposition(contentDisposition.merge(content.disposition))
     }
 }
 
 struct PlotViewPreview: PreviewProvider {
     static var previews: some View {
-        VStack {
+        ZStack {
             PlotView {
                 BarView(
-                    x: [0, 1, 2, 3, 4, 5, 5.5],
-                    y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                    x: [0.5, 1.5, 4.5, 6, 10, 11, 12, 18, 19, 20, 21, 22, 15],
+                    y: [1, 12, 20, 35, 8, 32, 50, 60, 55, 45, 50, 48, 10]
                 )
-                .barWidth(10)
+                .barWidth(15)
                 .barColor(.blue)
             } horizontal: {
-                HAxis(partitions: 2)
-            } vertical: {
-                VAxis(partitions: 3)
-                    .tickStroke(style: .tinyDashed)
-            }
-            //            .contentDisposition(left: -4, right: 7)
-            .tickInsets(trailing: 30)
-            .padding(100)
-            .background(Color.white)
-
-            PlotView {
-                BarView(
-                    x: [-5, 1, 2, 3, 4, 5, 5.5],
-                    y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+                HAxis(
+                    ticks: [0, 3, 6, 9, 12, 15, 18, 21, 24],
+                    labels: ["00", "03", "06", "09", "12", "15", "18", "21"]
                 )
-                .barColor(.green)
+                .tickStyle(.bottomTrailing)
+                .tickStroke(style: .tinyDashed)
+            } vertical: {
+                VAxis(
+                    ticks: [0, 20, 40, 60],
+                    labels: ["0m", "20m", "40m", "60m"]
+                )
+                .tickStyle(.trailing)
+                .tickStroke(style: StrokeStyle(lineWidth: 0.2))
             }
-            .tickInsets(bottom: 10, trailing: 20)
-            .padding(100)
+            .tickColor(.gray)
+            .tickInsets(bottom: 15)
+            .contentDisposition(left: 0, right: 24, bottom: 0, top: 60)
+            .padding(50)
             .background(Color.white)
-        }
-        .contentDisposition(bottom: 8)
-        .frame(height: 800)
 
+            Text("Screen on Usage")
+                .foregroundColor(.black.opacity(0.7))
+                .fontWeight(.bold)
+                .padding(.top, 200)
+            //            PlotView {
+            //                BarView(
+            //                    x: [-5, 1, 2, 3, 4, 5, 5.5],
+            //                    y: [10, 50, 30, 40, 50, 55, 60, 70, 80, 90]
+            //                )
+            //                .barColor(.green)
+            //            }
+            //            .tickInsets(bottom: 10, trailing: 20)
+            //            .padding(100)
+            //            .background(Color.white)
+        }
+        .foregroundColor(.gray)
+        .contentDisposition(bottom: 8)
+        .frame(height: 250)
     }
 }
