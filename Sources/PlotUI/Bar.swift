@@ -1,58 +1,66 @@
 import Foundation
 import SwiftUI
 
-public struct Viewport {
-    private var insets: EdgeInsets
-
-    public init(_ insets: EdgeInsets) {
-        self.insets = insets
-    }
-
-    public init() {
-        self.insets = EdgeInsets()
-    }
-
-    /// Adjust the given rectangle by the edge insets.
-    public func inset(rect: CGRect) -> CGRect {
-        return CGRect(
-            x: rect.minX + insets.leading,
-            y: rect.minY + insets.top,
-            width: rect.width - insets.trailing,
-            height: rect.height - insets.bottom
-        )
-    }
-}
-
-struct ViewportEnvironmentKey: EnvironmentKey {
-    static var defaultValue: Viewport = Viewport()
-}
-
-extension EnvironmentValues {
-    public var viewport: Viewport {
-        get { self[ViewportEnvironmentKey.self] }
-        set { self[ViewportEnvironmentKey.self] = newValue }
-    }
-}
-
-extension View {
-    public func viewport(_ insets: EdgeInsets) -> some View {
-        environment(\.viewport, Viewport(insets))
-    }
-
-    public func viewport(
-        top: CGFloat? = nil, leading: CGFloat? = nil, bottom: CGFloat? = nil,
-        trailing: CGFloat? = nil
-    ) -> some View {
-        let insets = EdgeInsets(
-            top: top ?? 0.0,
-            leading: leading ?? 0.0,
-            bottom: bottom ?? 0.0,
-            trailing: trailing ?? 0.0
-        )
-        return environment(\.viewport, Viewport(insets))
-    }
-}
-
+/// A view that represents the data with rectangular vertical bars with height 
+/// proportional to values that thay represent.
+///
+/// You can create a bar view by providing horizontal and vertical coordinates:
+///
+/// ```swift
+/// BarView(
+///     x: [1, 2, 3, 4, 5],
+///     y: [10, 20, 30, 40, 50]
+/// )
+/// ```
+///
+/// ## Styling Bar Views
+///
+/// You can customize the width of the bars within the view using ``BarView/barWidth(_:)``
+/// view modifier:
+/// ```swift
+/// PlotView {
+///     BarView(
+///         x: [1, 3, 5],
+///         y: [10, 20, 15]
+///     )
+///     .barWidth(20)
+/// }
+/// .viewport(bottom: 20)
+/// .contentDisposition(left: 0, right: 10)
+/// ```
+/// ![A bar view with 20-pixels wide bars](barview-barwidth.png)
+/// 
+/// You can also change the default color of the bar using ``BarView/barColor(_:)``:
+/// ```swift
+/// PlotView {
+///     BarView(
+///         x: [1, 3, 5],
+///         y: [10, 20, 15]
+///     )
+///     .barWidth(20)
+///     .barColor(.green)
+/// }
+/// .viewport(bottom: 20)
+/// .contentDisposition(left: 0, right: 10)
+/// ```
+/// ![A bar view with green 20-pixels wide bars](barview-barcolor.png)
+///
+/// Additionally, you can modify the corner radius of the bars using ``BarView/barCornerRadius(_:)``:
+///
+/// ```swift
+/// PlotView {
+///     BarView(
+///         x: [1, 3, 5],
+///         y: [10, 20, 15]
+///     )
+///     .barWidth(20)
+///     .barColor(.green)
+///     .barCornerRadius(10)
+/// }
+/// .viewport(bottom: 20)
+/// .contentDisposition(left: 0, right: 10)
+/// ```
+/// ![A bar view with green rounded 20-pixels wide bars](barview-barcornerradius.png)
 public struct BarView: FuncView {
 
     private var x: [Double]
@@ -62,11 +70,11 @@ public struct BarView: FuncView {
     @Environment(\.viewport) private var viewport
     @Environment(\.contentDisposition) private var contentDisposition
 
-    // Fill style of the bars.
     private var radius: CGFloat = 2
     private var width: CGFloat = 5
     private var color: Color = .gray
 
+    /// The content disposition limits.
     public var disposition: ContentDisposition {
         return contentDisposition.merge(_disposition)
     }
@@ -81,15 +89,20 @@ public struct BarView: FuncView {
         self._disposition = disposition
     }
 
+    /// Creates hozizontal bars at the given positions with determined height.
+    ///
+    /// - Parameter x: The coordinates of the bars on horizontal axis.
+    /// - Parameter y: The height of the bars on vertical axis.
     public init(x: [Double], y: [Double]) {
         self.x = x
         self.y = y
 
         self._disposition = ContentDisposition(
-            left: x.min(), right: x.max(), bottom: y.min(), top: y.max()
+            left: x.min(), right: x.max(), bottom: 0.0, top: y.max()
         )
     }
 
+    /// The content and behaviour of the view.
     public var body: some View {
         GeometryReader { rect in
             let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
@@ -130,18 +143,21 @@ public struct BarView: FuncView {
 }
 
 extension BarView {
+    /// Modifies the corner radius fof the bars within the bar view.
     public func barCornerRadius(_ radius: CGFloat) -> BarView {
         var view = self
         view.radius = radius
         return view
     }
 
+    /// Changes the width of the bars within the bar view.
     public func barWidth(_ width: CGFloat) -> BarView {
         var view = self
         view.width = width
         return view
     }
 
+    /// Changes the color of the bars within the bar view.
     public func barColor(_ color: Color) -> BarView {
         var view = self
         view.color = color
@@ -151,13 +167,19 @@ extension BarView {
 
 struct BarViewPreview: PreviewProvider {
     static var previews: some View {
-        BarView(
-            x: [0, 1, 2, 3, -4],
-            y: [10, 40, 30, 50, 5]
-        )
-        .barColor(.green)
-        .viewport(bottom: 10, trailing: 20)
-        .contentDisposition(bottom: 1)
-        .frame(width: 500, height: 300)
+        PlotView {
+            BarView(
+                x: [1, 2, 3],
+                y: [10, 20, 15]
+            )
+            .barWidth(20)
+            .barColor(.green)
+            .barCornerRadius(10)
+        }
+        .contentDisposition(left: 0, right: 10)
+        .viewport(bottom: 20)
+        .padding(50)
+        .frame(width: 600, height: 300)
+        .background(Color.white)
     }
 }
