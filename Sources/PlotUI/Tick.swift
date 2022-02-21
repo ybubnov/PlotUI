@@ -96,6 +96,7 @@ public struct Tick: View {
     @Environment(\.viewport) private var viewport
     @Environment(\.tickStyle) private var style
     @Environment(\.tickStroke) private var stroke
+    @Environment(\.tickColor) private var color
 
     @ScaledMetric(relativeTo: .body) private var padding = 10
 
@@ -120,7 +121,7 @@ public struct Tick: View {
                 )
             )
 
-            path.stroke(style: stroke)
+            path.stroke(style: stroke).fill(color)
             style.makeBody(
                 configuration: TickStyleConfiguration(
                     label: TickStyleConfiguration.Label(Text(label)),
@@ -162,10 +163,19 @@ struct TickStrokeEnvironmentKey: EnvironmentKey {
     static var defaultValue: StrokeStyle = .tiny
 }
 
+struct TickColorEnvironmentKey: EnvironmentKey {
+    static var defaultValue: Color = .gray
+}
+
 extension EnvironmentValues {
     public var tickStroke: StrokeStyle {
         get { self[TickStrokeEnvironmentKey.self] }
         set { self[TickStrokeEnvironmentKey.self] = newValue }
+    }
+
+    public var tickColor: Color {
+        get { self[TickColorEnvironmentKey.self] }
+        set { self[TickColorEnvironmentKey.self] = newValue }
     }
 }
 
@@ -176,6 +186,10 @@ extension View {
 
     public func tickInsets(_ insets: EdgeInsets) -> some View {
         return viewport(insets)
+    }
+
+    public func tickColor(_ color: Color) -> some View {
+        environment(\.tickColor, color)
     }
 
     public func tickInsets(
