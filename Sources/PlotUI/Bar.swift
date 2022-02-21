@@ -12,6 +12,10 @@ import SwiftUI
 ///     y: [10, 20, 30, 40, 50]
 /// )
 /// ```
+/// Usually `BarView` is used within ``PlotView`` container that automatically defines
+/// axes with appropriate ticks. By default, vertical limit is set to `0`, to render
+/// only positive bars. You can use ``PlotView/contentDisposition(left:right:bottom:top:)``
+/// to adjust the limits of the axes and include negative values into the view.
 ///
 /// ## Styling Bar Views
 ///
@@ -110,27 +114,33 @@ public struct BarView: FuncView {
 
             let xScale = CGFloat(frame.width / bounds.width)
             let yScale = CGFloat(frame.height / bounds.height)
+            
+            let xZero = (bounds.width - bounds.right) * xScale
+            let yZero = frame.height - (bounds.height - bounds.top) * yScale
 
             let cornerSize = CGSize(width: radius, height: radius)
 
             Path { path in
                 x.indices.forEach { i in
-                    let xpos = (x[i] - bounds.left) * xScale
-                    let ypos = min(max(0, (y[i] - bounds.bottom) * yScale), frame.height)
+                    let xpos = x[i] * xScale
+                    let ypos = y[i] * yScale
+                    let height = abs(ypos)
 
-                    let x = xpos - self.width / 2 + frame.minX
-                    let y = frame.height - ypos + frame.minY
+                    let x = xZero + xpos - self.width / 2
+                    let y = ypos > 0 ? yZero - ypos : yZero
 
-                    // TODO: what if the rectangle width out of the visible area?
-                    let bar = CGRect(x: x, y: y, width: self.width, height: ypos)
+                    let bar = frame.intersection(
+                        CGRect(x: x, y: y, width: self.width, height: height)
+                    )
 
-                    let sharpHeight = min(ypos, radius)
+                    let sharpHeight = min(height, radius)
+                    let sharpY = ypos > 0 ? bar.maxY - sharpHeight : yZero
+                    
                     let sharpOverlay = CGRect(
-                        x: x, y: y + ypos - sharpHeight, width: self.width, height: sharpHeight)
-
+                        x: x, y: sharpY, width: self.width, height: sharpHeight)
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
-                    if frame.intersects(bar) {
+                    if !bar.isEmpty {
                         path.addRoundedRect(in: bar, cornerSize: cornerSize)
                         path.addRect(sharpOverlay)
                         path.closeSubpath()
@@ -170,11 +180,11 @@ struct BarViewPreview: PreviewProvider {
         PlotView {
             BarView(
                 x: [1, 2, 3],
-                y: [10, 20, 15]
+                y: [-10, 5, 20]
             )
             .barWidth(20)
             .barColor(.green)
-            .barCornerRadius(10)
+            .barCornerRadius(3)
         }
         .contentDisposition(left: 0, right: 10)
         .viewport(bottom: 20)
