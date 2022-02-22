@@ -112,27 +112,36 @@ extension View {
     }
 }
 
+/// A view that represents plotting data.
 public protocol FuncView: View {
+    /// The content disposition of the data.
     var disposition: ContentDisposition { get }
 }
 
 /// A type-erased FuncView view.
+///
+/// An `AnyFuncView` allows changing the type of the `FuncView` used in a given view
+/// hierarchy. Whenever the type of view used with an `AnyFuncView` changes, the old
+/// hierarchy is destroyed and a new hierarchy is created for the new type.
 public struct AnyFuncView: FuncView {
-
+    /// The type of view representing the body of this view.
     public typealias Body = AnyView
 
     private var _disposition: ContentDisposition
     private var _view: AnyView
 
+    /// Creates an instance that type-erases `view`.
     public init<V: FuncView>(_ view: V) {
         self._view = AnyView(view)
         self._disposition = view.disposition
     }
 
+    /// The limits of the content.
     public var disposition: ContentDisposition {
         self._disposition
     }
 
+    /// The content and behavior of the view.
     public var body: AnyView {
         _view
     }

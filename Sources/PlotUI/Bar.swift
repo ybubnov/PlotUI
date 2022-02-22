@@ -29,7 +29,7 @@ import SwiftUI
 ///     )
 ///     .barWidth(20)
 /// }
-/// .viewport(bottom: 20)
+/// .tickInsets(bottom: 20)
 /// .contentDisposition(left: 0, right: 10)
 /// ```
 /// ![A bar view with 20-pixels wide bars](barview-barwidth.png)
@@ -44,7 +44,7 @@ import SwiftUI
 ///     .barWidth(20)
 ///     .barColor(.green)
 /// }
-/// .viewport(bottom: 20)
+/// .tickInsets(bottom: 20)
 /// .contentDisposition(left: 0, right: 10)
 /// ```
 /// ![A bar view with green 20-pixels wide bars](barview-barcolor.png)
@@ -61,7 +61,7 @@ import SwiftUI
 ///     .barColor(.green)
 ///     .barCornerRadius(10)
 /// }
-/// .viewport(bottom: 20)
+/// .tickInsets(bottom: 20)
 /// .contentDisposition(left: 0, right: 10)
 /// ```
 /// ![A bar view with green rounded 20-pixels wide bars](barview-barcornerradius.png)
