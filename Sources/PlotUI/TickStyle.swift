@@ -19,7 +19,11 @@ public struct TickStyleConfiguration {
     public let padding: CGFloat
 }
 
-/// A type that applies custom appearence to tick labels.
+/// A type that applies custom appearance to tick labels.
+///
+/// To configure the current tick style for a view hierarchy, use the
+/// ``PlotView/tickStyle(_:)`` modifier. Specify a style that conforms `TickStyle` to
+/// create a tick with custom appearance.
 public protocol TickStyle {
     /// A view that represents the body of a tick label.
     associatedtype Body: View
@@ -31,49 +35,66 @@ public protocol TickStyle {
     @ViewBuilder func makeBody(configuration: Configuration) -> Body
 }
 
+/// A type-erased TickStyle value.
 public struct AnyTickStyle: TickStyle {
     public typealias Body = AnyView
 
     private let _makeBody: (Configuration) -> AnyView
 
+    /// Creates an instance from `style`.
     public init<S: TickStyle>(_ style: S) {
         self._makeBody = { (configuration: Configuration) in
             AnyView(style.makeBody(configuration: configuration))
         }
     }
 
+    /// Creates a view that represents the body of a tick label.
     public func makeBody(configuration: Configuration) -> AnyView {
         _makeBody(configuration)
     }
 }
 
 extension TickStyle where Self == BottomTickStyle {
+    /// A tick style that decorates the tick with a label below tick's position.
     public static var bottom: BottomTickStyle { BottomTickStyle() }
 }
 
 extension TickStyle where Self == BottomTrailingTickStyle {
+    /// A tick style that decorates the tick with a label below tick's position
+    /// and aligns it to the right.
     public static var bottomTrailing: BottomTrailingTickStyle {
         BottomTrailingTickStyle()
     }
 }
 
 extension TickStyle where Self == TrailingTickStyle {
+    /// A tick style that decorates the tick with a label that is aligned to the right
+    /// relative to the tick's position.
     public static var trailing: TrailingTickStyle { TrailingTickStyle() }
 }
 
-extension TickStyle where Self == EmptyTickStyle {
-    public static var empty: EmptyTickStyle { EmptyTickStyle() }
+extension TickStyle where Self == PlainTickStyle {
+    /// A tick style without decorations.
+    public static var plain: PlainTickStyle { PlainTickStyle() }
 }
 
-/// A tick label style that does render the content at all.
-public struct EmptyTickStyle: TickStyle {
+/// A tick style without decorations.
+///
+/// To apply this style to a tick, or to a view that contains ticks, use the
+/// ``PlotView/tickStyle(_:)`` modifier.
+public struct PlainTickStyle: TickStyle {
+    /// Creates a view that represents the body of a tick label.
     public func makeBody(configuration: Configuration) -> some View {
         EmptyView()
     }
 }
 
+/// A tick style that decorates the tick with a label below tick's position.
+///
+/// To apply this style to a tick, or to a view that contains ticks, use the
+/// ``PlotView/tickStyle(_:)`` modifier.
 public struct BottomTickStyle: TickStyle {
-
+    /// Creates a view that represents the body of a tick label.
     public func makeBody(configuration: Configuration) -> some View {
         if configuration.orientation == .vertical {
             return AnyView(
@@ -96,7 +117,13 @@ public struct BottomTickStyle: TickStyle {
     }
 }
 
+/// A tick style that decorates the tick with a label below tick's position
+/// and aligns it to the right.
+///
+/// To apply this style to a tick, or to a view that contains ticks, use the
+/// ``PlotView/tickStyle(_:)`` modifier.
 public struct BottomTrailingTickStyle: TickStyle {
+    /// Creates a view that represents the body of a tick label.
     public func makeBody(configuration: Configuration) -> some View {
         let pos = CGSize(width: configuration.tick.maxX, height: configuration.tick.maxY)
 
@@ -109,7 +136,13 @@ public struct BottomTrailingTickStyle: TickStyle {
     }
 }
 
+/// A tick style that decorates the tick with a label that is aligned to the right
+/// relative to the tick's position.
+///
+/// To apply this style to a tick, or to a view that contains ticks, use the
+/// ``PlotView/tickStyle(_:)`` modifier.
 public struct TrailingTickStyle: TickStyle {
+    /// Creates a view that represents the body of a tick label.
     public func makeBody(configuration: Configuration) -> some View {
         let pos = CGSize(
             width: configuration.tick.maxX + configuration.padding / 3,
