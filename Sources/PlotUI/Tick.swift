@@ -1,42 +1,60 @@
 import Foundation
 import SwiftUI
 
-public struct TickOrientationConfiguration {
+/// The properties of a tick orientation.
+struct TickOrientationConfiguration {
+    /// A value of a specific point on a target axis.
     let value: Double
 
+    /// A bounds of the plot's data.
     let contentDisposition: ContentDisposition
 
+    /// An area where the plot's data is currently being viewed.
     let viewport: Viewport
 
-    let size: CGSize
+    /// A flexible preferred size of the parent's layout.
+    let frameSize: CGSize
 }
 
-public protocol TickOrientationStyle {
+/// A type that applies a custom appearence to tick geometry.
+///
+/// To configure the tick representation, use the `Tick`'s constructor
+/// ``Tick/init(_:orientation:value:)``. Specify a style that conforms
+/// `TickOrientationStyle` to create a tick with custom orientation.
+protocol TickOrientationStyle {
+    /// The properties of a tick orientation.
     typealias Configuration = TickOrientationConfiguration
 
+    /// Create a path that represents a tick.
     func makeBody(configuration: Configuration) -> Path
 }
 
-public struct AnyTickOrientationStyle: TickOrientationStyle {
+/// A type-erased TickOrientationStyle value.
+struct AnyTickOrientationStyle: TickOrientationStyle {
 
     var _makeBody: (Configuration) -> Path
 
-    public init<S: TickOrientationStyle>(_ style: S) {
+    /// Creates an instance from `style`.
+    init<S: TickOrientationStyle>(_ style: S) {
         self._makeBody = { configuration in
             style.makeBody(configuration: configuration)
         }
     }
 
-    public func makeBody(configuration: Configuration) -> Path {
+    /// Creates a path that represents a tick.
+    func makeBody(configuration: Configuration) -> Path {
         _makeBody(configuration)
     }
 }
 
+/// A tick orientation that shows a tick as a vertical line from the bottom to the top
+/// of its parent plot.
 struct VerticalTickOrientationStyle: TickOrientationStyle {
+    /// Creates a path that represents a tick.
     func makeBody(configuration: Configuration) -> Path {
         let disposition = configuration.contentDisposition
         let rect = configuration.viewport.inset(
-            rect: CGRect(origin: .zero, size: configuration.size)
+            rect: CGRect(origin: .zero, size: configuration.frameSize)
         )
 
         let xScale = rect.width / disposition.bounds.width
@@ -45,17 +63,20 @@ struct VerticalTickOrientationStyle: TickOrientationStyle {
         return Path { path in
             if (rect.minX...rect.maxX).contains(x) {
                 path.move(to: CGPoint(x: x, y: rect.minY))
-                path.addLine(to: CGPoint(x: x, y: configuration.size.height))
+                path.addLine(to: CGPoint(x: x, y: configuration.frameSize.height))
             }
         }
     }
 }
 
+/// A tick orientation that shows a tick as a horizontal line from left to the right
+/// of its parent plot.
 struct HorizontalTickOrientationStyle: TickOrientationStyle {
+    /// Creates a path that represents a tick.
     func makeBody(configuration: Configuration) -> Path {
         let disposition = configuration.contentDisposition
         let rect = configuration.viewport.inset(
-            rect: CGRect(origin: .zero, size: configuration.size)
+            rect: CGRect(origin: .zero, size: configuration.frameSize)
         )
 
         // All y-axis ticks are located on the horizontal axis, hence subtract the
@@ -66,12 +87,21 @@ struct HorizontalTickOrientationStyle: TickOrientationStyle {
         return Path { path in
             if (rect.minY...rect.maxY).contains(y) {
                 path.move(to: CGPoint(x: rect.minX, y: y))
-                path.addLine(to: CGPoint(x: configuration.size.width, y: y))
+                path.addLine(to: CGPoint(x: configuration.frameSize.width, y: y))
             }
         }
     }
 }
 
+/// A value that describes the orientation of a tick.
+///
+/// A tick orientation defines a tick's target axis. For example,
+/// the ``TickOrientation/horizontal`` indicates that a tick is dedicated for Y axis and
+/// is used to show a specific point on Y axis:
+///
+/// ```swift
+/// Tick("One", orientation: .horizontal, value: 1.0)
+/// ```
 public struct TickOrientation: Equatable {
 
     internal var axis: Axis.Set
@@ -82,10 +112,17 @@ public struct TickOrientation: Equatable {
         self.style = AnyTickOrientationStyle(style)
     }
 
+    /// An orientation that indicates a vertical tick.
+    ///
+    /// Use this orientation for a tick that shows a specific point on Y axis.
     public static let vertical = TickOrientation(.vertical, VerticalTickOrientationStyle())
 
+    /// An orientation that indicates a horizontal tick.
+    ///
+    /// Use this orientation for a tick that shows a specific point on X axis.
     public static let horizontal = TickOrientation(.horizontal, HorizontalTickOrientationStyle())
 
+    /// Indicates whether two tick orientations are equal.
     public static func == (a: TickOrientation, b: TickOrientation) -> Bool {
         return a.axis == b.axis
     }
@@ -117,7 +154,7 @@ public struct Tick: View {
                     value: value,
                     contentDisposition: disposition,
                     viewport: viewport,
-                    size: rect.size
+                    frameSize: rect.size
                 )
             )
 
