@@ -221,12 +221,12 @@ extension View {
         environment(\.tickStroke, style)
     }
 
-    public func tickInsets(_ insets: EdgeInsets) -> some View {
-        return viewport(insets)
-    }
-
     public func tickColor(_ color: Color) -> some View {
         environment(\.tickColor, color)
+    }
+
+    public func tickInsets(_ insets: EdgeInsets) -> some View {
+        return viewport(insets)
     }
 
     public func tickInsets(
