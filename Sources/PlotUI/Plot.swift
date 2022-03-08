@@ -8,14 +8,14 @@ import SwiftUI
 ///
 /// Usually `HAxis` is used altogether with ``PlotView`` which automatically handles
 /// content disposition. If you use it separately, you should use
-/// ``HAxis/contentDisposition(left:right:bottom:top:)`` to setup limits for axes.
+/// ``HAxis/contentDisposition(minX:maxX:minY:maxY:)`` to setup limits for axes.
 ///
 /// In the following example an outer frame is partitioned by 10 sections generating
 /// 11 ticks:
 ///
 /// ```swift
 /// HAxis(partititions: 10)
-/// .contentDisposition(left: 0, right: 200, bottom: 0, top: 100)
+/// .contentDisposition(minX: 0, maxX: 200, minY: 0, maxY: 100)
 /// ```
 ///
 /// ## Styling Ticks
@@ -104,14 +104,14 @@ public struct HAxis: View {
 ///
 /// Usually `VAxis` is used altogether with ``PlotView`` which automatically handles
 /// content disposition. If you use it separately, you should use
-/// ``VAxis/contentDisposition(left:right:bottom:top:)`` to setup limits for axes.
+/// ``VAxis/contentDisposition(minX:maxX:minY:maxY:)`` to setup limits for axes.
 ///
 /// In the following example an outer frame is partitioned by 4 sections generating
 /// 5 ticks:
 ///
 /// ```swift
 /// VAxis(partititions: 4)
-/// .contentDisposition(left: 0, right: 200, bottom: 0, top: 100)
+/// .contentDisposition(minX: 0, maxX: 200, minY: 0, maxY: 100)
 /// ```
 ///
 /// ## Styling Ticks
@@ -231,7 +231,7 @@ public struct VAxis: View {
 ///
 /// You can provide a fixed set of ticks for both axes using ``HAxis/init(ticks:labels:)``
 /// for horizontal axis and ``VAxis/init(ticks:labels:)``. In order to make them visible
-/// use ``PlotView/contentDisposition(left:right:bottom:top:)`` modifier to adjust the limits
+/// use ``PlotView/contentDisposition(minX:maxX:minY:maxY:)`` modifier to adjust the limits
 /// of axes.
 ///
 /// For example, to make the horizontal and vertical ticks visible, adjust limits of the
@@ -251,7 +251,7 @@ public struct VAxis: View {
 /// } vertical: {
 ///     VAxis(ticks: [1000, 2000, 3000])
 /// }
-/// .contentDisposition(left: 1, right: 5, bottom: 0, top: 3000)
+/// .contentDisposition(minX: 1, maxX: 5, minY: 0, maxY: 3000)
 /// ```
 public struct PlotView: View {
     @Environment(\.contentDisposition) var contentDisposition
@@ -316,7 +316,7 @@ struct PlotViewPreview: PreviewProvider {
             }
             .tickColor(.gray)
             .tickInsets(bottom: 15)
-            .contentDisposition(left: 0, right: 24, bottom: 0, top: 60)
+            .contentDisposition(minX: 0, maxX: 24, minY: 0, maxY: 60)
             .padding(50)
             .background(Color.white)
 
@@ -336,7 +336,7 @@ struct PlotViewPreview: PreviewProvider {
             //            .background(Color.white)
         }
         .foregroundColor(.gray)
-        .contentDisposition(bottom: 8)
+        .contentDisposition(minY: 8)
         .frame(height: 250)
     }
 }
