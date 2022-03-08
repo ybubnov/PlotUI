@@ -12,7 +12,7 @@ final class BarViewTests: XCTestCase {
 
         XCTAssertEqual(
             bar.disposition,
-            ContentDisposition(left: -3.0, right: 2.0, bottom: 0.0, top: 40.0))
+            ContentDisposition(minX: -3.0, maxX: 2.0, minY: 0.0, maxY: 40.0))
     }
 
     func testFill() throws {

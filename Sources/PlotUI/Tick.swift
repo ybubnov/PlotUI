@@ -6,7 +6,7 @@ struct TickOrientationConfiguration {
     /// A value of a specific point on a target axis.
     let value: Double
 
-    /// A bounds of the plot's data.
+    /// Bounds of the plot's data.
     let contentDisposition: ContentDisposition
 
     /// An area where the plot's data is currently being viewed.
@@ -57,8 +57,8 @@ struct VerticalTickOrientationStyle: TickOrientationStyle {
             rect: CGRect(origin: .zero, size: configuration.frameSize)
         )
 
-        let xScale = rect.width / disposition.bounds.width
-        let x = rect.minX + (configuration.value - disposition.bounds.left) * xScale
+        let xScale = rect.width / disposition.width
+        let x = rect.minX + (configuration.value - disposition.minX) * xScale
 
         return Path { path in
             if (rect.minX...rect.maxX).contains(x) {
@@ -81,8 +81,8 @@ struct HorizontalTickOrientationStyle: TickOrientationStyle {
 
         // All y-axis ticks are located on the horizontal axis, hence subtract the
         // size of y-tick from the width of this axis.
-        let yScale = rect.height / disposition.bounds.height
-        let y = rect.maxY - (configuration.value - disposition.bounds.bottom) * yScale
+        let yScale = rect.height / disposition.height
+        let y = rect.maxY - (configuration.value - disposition.minY) * yScale
 
         return Path { path in
             if (rect.minY...rect.maxY).contains(y) {
@@ -176,7 +176,7 @@ struct VerticalTickPreview: PreviewProvider {
     static var previews: some View {
         GeometryReader { rect in
             Tick("5", orientation: .vertical, value: 5)
-                .contentDisposition(left: 0, right: 10, bottom: 0, top: 10)
+                .contentDisposition(minX: 0, maxX: 10, minY: 0, maxY: 10)
                 .tickInsets(top: 40, bottom: 40)
                 .tickStyle(.bottomTrailing)
                 .tickStroke(style: .tinyDashed)

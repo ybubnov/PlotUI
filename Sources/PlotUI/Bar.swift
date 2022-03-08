@@ -14,7 +14,7 @@ import SwiftUI
 /// ```
 /// Usually `BarView` is used within ``PlotView`` container that automatically defines
 /// axes with appropriate ticks. By default, vertical limit is set to `0`, to render
-/// only positive bars. You can use ``PlotView/contentDisposition(left:right:bottom:top:)``
+/// only positive bars. You can use ``PlotView/contentDisposition(minX:maxX:minY:maxY:)``
 /// to adjust the limits of the axes and include negative values into the view.
 ///
 /// ## Styling Bar Views
@@ -30,7 +30,7 @@ import SwiftUI
 ///     .barWidth(20)
 /// }
 /// .tickInsets(bottom: 20)
-/// .contentDisposition(left: 0, right: 10)
+/// .contentDisposition(minX: 0, maxX: 10)
 /// ```
 /// ![A bar view with 20-pixels wide bars](barview-barwidth.png)
 /// 
@@ -45,7 +45,7 @@ import SwiftUI
 ///     .barColor(.green)
 /// }
 /// .tickInsets(bottom: 20)
-/// .contentDisposition(left: 0, right: 10)
+/// .contentDisposition(minX: 0, maxX: 10)
 /// ```
 /// ![A bar view with green 20-pixels wide bars](barview-barcolor.png)
 ///
@@ -62,7 +62,7 @@ import SwiftUI
 ///     .barCornerRadius(10)
 /// }
 /// .tickInsets(bottom: 20)
-/// .contentDisposition(left: 0, right: 10)
+/// .contentDisposition(minX: 0, maxX: 10)
 /// ```
 /// ![A bar view with green rounded 20-pixels wide bars](barview-barcornerradius.png)
 public struct BarView: FuncView {
@@ -95,14 +95,15 @@ public struct BarView: FuncView {
 
     /// Creates hozizontal bars at the given positions with determined height.
     ///
-    /// - Parameter x: The coordinates of the bars on horizontal axis.
-    /// - Parameter y: The height of the bars on vertical axis.
+    /// - Parameters:
+    ///   - x: The coordinates of the bars on horizontal axis.
+    ///   - y: The height of the bars on vertical axis.
     public init(x: [Double], y: [Double]) {
         self.x = x
         self.y = y
 
         self._disposition = ContentDisposition(
-            left: x.min(), right: x.max(), bottom: 0.0, top: y.max()
+            minX: x.min(), maxX: x.max(), minY: 0.0, maxY: y.max()
         )
     }
 
@@ -110,13 +111,12 @@ public struct BarView: FuncView {
     public var body: some View {
         GeometryReader { rect in
             let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
-            let bounds = disposition.bounds
 
-            let xScale = CGFloat(frame.width / bounds.width)
-            let yScale = CGFloat(frame.height / bounds.height)
+            let xScale = CGFloat(frame.width / disposition.width)
+            let yScale = CGFloat(frame.height / disposition.height)
             
-            let xZero = (bounds.width - bounds.right) * xScale
-            let yZero = frame.height - (bounds.height - bounds.top) * yScale
+            let xZero = (disposition.width - disposition.maxX) * xScale
+            let yZero = frame.height - (disposition.height - disposition.maxY) * yScale
 
             let cornerSize = CGSize(width: radius, height: radius)
 
@@ -186,7 +186,7 @@ struct BarViewPreview: PreviewProvider {
             .barColor(.green)
             .barCornerRadius(3)
         }
-        .contentDisposition(left: 0, right: 10)
+        .contentDisposition(minX: 0, maxX: 10)
         .viewport(bottom: 20)
         .padding(50)
         .frame(width: 600, height: 300)
