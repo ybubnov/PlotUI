@@ -21,7 +21,7 @@ import SwiftUI
 /// ## Styling Ticks
 ///
 /// You can customize your axis' label appearance using one of the standard tick styles,
-/// like ``TickStyle/bottom`` and apply the style with the ``HAxis/tickStyle(_:)``
+/// like ``TickStyle/bottom`` and apply the style with the ``Tick/tickStyle(_:)``
 /// modifier.
 ///
 /// ```swift
@@ -59,6 +59,8 @@ import SwiftUI
 /// }
 /// .tickInsets(EdgeInsets(top: 0, leading: 0, bottom: 20, trailing: 20))
 /// ```
+///
+/// See the full list of tick styling options in ``Tick`` documentation.
 public struct HAxis: View {
     @Environment(\.contentDisposition) var contentDisposition
 
@@ -117,7 +119,7 @@ public struct HAxis: View {
 /// ## Styling Ticks
 ///
 /// You can customize your axis' label appearance using one of the standard tick styles,
-/// like ``TickStyle/trailing`` and apply the style with the ``VAxis/tickStyle(_:)``
+/// like ``TickStyle/trailing`` and apply the style with the ``Tick/tickStyle(_:)``
 /// modifier.
 ///
 /// ```swift
@@ -155,6 +157,8 @@ public struct HAxis: View {
 /// }
 /// .tickInsets(bottom: 30)
 /// ```
+///
+/// See the full list of tick styling options in ``Tick`` documentation.
 public struct VAxis: View {
     @Environment(\.contentDisposition) var contentDisposition
 
