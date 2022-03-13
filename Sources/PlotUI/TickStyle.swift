@@ -160,20 +160,3 @@ extension Shape {
         return CGRect(origin: CGPoint(), size: rect.size)
     }
 }
-
-struct TickStyleEnvironmentKey: EnvironmentKey {
-    static var defaultValue: AnyTickStyle = AnyTickStyle(.bottom)
-}
-
-extension EnvironmentValues {
-    public var tickStyle: AnyTickStyle {
-        get { self[TickStyleEnvironmentKey.self] }
-        set { self[TickStyleEnvironmentKey.self] = newValue }
-    }
-}
-
-extension View {
-    public func tickStyle<S: TickStyle>(_ style: S) -> some View {
-        environment(\.tickStyle, AnyTickStyle(style))
-    }
-}
