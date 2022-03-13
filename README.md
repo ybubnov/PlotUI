@@ -1,4 +1,4 @@
-# [PlotUI](https://ploui.pages.dev) &middot; [![Tests][Tests]](https://github.com/ybubnov/PlotUI)
+# [PlotUI](https://plotui.pages.dev) &middot; [![Tests][Tests]](https://github.com/ybubnov/PlotUI)
 
 Integrate beautiful minimalistic plots into your app.
 
