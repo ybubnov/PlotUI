@@ -29,7 +29,7 @@ PlotView {
     BarView(
         x: [3, 4, 5],
         y: [2000, 2100, 2300]
-    ),
+    )
 } horizontal: {
     HAxis(
         ticks: [1, 2, 3, 4, 5],
