@@ -153,7 +153,7 @@ public struct BarView: FuncView {
 }
 
 extension BarView {
-    /// Modifies the corner radius fof the bars within the bar view.
+    /// Modifies the corner radius for the bars within the bar view.
     public func barCornerRadius(_ radius: CGFloat) -> BarView {
         var view = self
         view.radius = radius
