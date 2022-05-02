@@ -240,7 +240,7 @@ public struct VAxis: View {
 ///
 /// For example, to make the horizontal and vertical ticks visible, adjust limits of the
 /// axes by setting content disposition:
-
+///
 /// ```swift
 /// PlotView {
 ///     BarView(

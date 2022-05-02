@@ -42,6 +42,19 @@ PlotView {
 .frame(width: 500, height: 300)
 ```
 
+You can use `LineView` to define a line chart:
+```swift
+PlotView{
+    LineView(
+        x: [0, 1, 2, 3, 4, 5],
+        y: [10, 20, 0, 45, 30, 50]
+    )
+}
+.tickInsets(bottom: 20, trailing: 20)
+.contentDisposition(minX: -5, maxX: 15, minY: 0)
+.frame(width: 600, height: 300)
+```
+
 ## License
 
 PlotUI is [MIT licensed](LICENSE).
