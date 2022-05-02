@@ -11,9 +11,11 @@ import SwiftUI
 /// ```swift
 /// LineView(
 ///     x: [0, 1, 2, 3, 4, 5],
-///     y: [0, 3, 7, 12, 18, 30]
+///     y: [10, 20, 0, 45, 30, 50]
 /// )
 /// ```
+/// ![A line view with line view](lineview.png)
+///
 /// Usually `LineView` is used within ``PlotView`` container that automatically defines
 /// axes with appropriate ticks. You can use ``PlotView/contentDisposition(minX:maxX:minY:maxY:)``
 /// to adjust the limits of the axes to position the view's content as you want.
@@ -26,22 +28,24 @@ import SwiftUI
 /// PlotView {
 ///     LineView(
 ///         x: [1, 2, 3, 4, 5, 6]
-///         y: [10, 20, 5, 15, 18, 3]
+///         y: [10, 20, 0, 45, 30, 50]
 ///     )
 ///     .lineStroke(style: StrokeStyle(lineWidth: 1.0, dash: [2]))
 /// }
 /// ```
+/// ![A line view with dashed stroke 1 pixel width](lineview-linestroke.png)
 ///
 /// You can also change the default color of the line using ``LineView/lineColor(_:)``:
 /// ```swift
 /// PlotView {
 ///     LineView(
 ///         x: [1, 2, 3, 4, 5, 6]
-///         y: [10, 20, 5, 15, 18, 3]
+///         y: [10, 20, 0, 45, 30, 50]
 ///     )
-///     .lineColor(.black)
+///     .lineColor(.mint)
 /// }
 /// ```
+/// ![A linew view with mint color line](lineview-linecolor.png)
 ///
 /// Additionally, you can modify the background overlay of the line chart using
 /// ``LineView/lineFill(_:)``:
@@ -54,6 +58,7 @@ import SwiftUI
 ///     .lineFill(.green.opacity(0.3))
 /// }
 /// ```
+/// ![A line view with opaque green fill](lineview-linefill.png)
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct LineView: FuncView {
 
