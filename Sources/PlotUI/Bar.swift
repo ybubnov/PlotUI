@@ -136,8 +136,9 @@ public struct BarView: FuncView {
                     let sharpHeight = min(height, radius)
                     let sharpY = ypos > 0 ? bar.maxY - sharpHeight : yZero
                     
-                    let sharpOverlay = CGRect(
-                        x: x, y: sharpY, width: self.width, height: sharpHeight)
+                    let sharpOverlay = frame.intersection(
+                        CGRect(x: x, y: sharpY, width: self.width, height: sharpHeight)
+                    )
                     // Draw the bar only if its x-axis position is within the view range.
                     // In case, when y does not fit into the view, draw only visible part.
                     if !bar.isEmpty {
@@ -179,8 +180,8 @@ struct BarViewPreview: PreviewProvider {
     static var previews: some View {
         PlotView {
             BarView(
-                x: [1, 2, 3],
-                y: [-10, 5, 20]
+                x: [0, 2, 3],
+                y: [2, 5, 20]
             )
             .barWidth(20)
             .barColor(.green)
