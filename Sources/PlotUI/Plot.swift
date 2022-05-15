@@ -78,6 +78,21 @@ public struct HAxis: View {
         self.labels = labels
     }
 
+    /// Creates a horizontal axis using the given list of ticks and format style.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public init<F: FormatStyle>(ticks: [Double] = [], format: F) where
+        F.FormatInput == Double, F.FormatOutput == String
+    {
+        self.ticks = ticks
+        self.labels = ticks.map { LocalizedStringKey(format.format($0)) }
+    }
+
+    /// Creates a horizonal axis using the given list of ticks and format string.
+    public init(ticks: [Double] = [], format: String) {
+        self.ticks = ticks
+        self.labels = ticks.formatEach(format)
+    }
+
     /// Creates a horizontal axis that generates determined number of ticks.
     public init(partitions: Int) {
         self.partitions = partitions
@@ -174,6 +189,21 @@ public struct VAxis: View {
     public init(ticks: [Double] = [], labels: [LocalizedStringKey] = []) {
         self.ticks = ticks
         self.labels = labels
+    }
+
+    /// Creates a vertical axis using the given list of ticks and format style.
+    @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+    public init<F: FormatStyle>(ticks: [Double] = [], format: F) where
+        F.FormatInput == Double, F.FormatOutput == String
+    {
+        self.ticks = ticks
+        self.labels = ticks.map { LocalizedStringKey(format.format($0)) }
+    }
+
+    /// Creates a vertical axis using the given list of ticks and format string.
+    public init(ticks: [Double] = [], format: String) {
+        self.ticks = ticks
+        self.labels = ticks.formatEach(format)
     }
 
     /// Creates a vertical axis that generates determined number of ticks.
