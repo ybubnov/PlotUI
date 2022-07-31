@@ -327,7 +327,7 @@ struct PlotViewPreview: PreviewProvider {
     static var previews: some View {
         ZStack {
             PlotView {
-                LineView(
+                BarView(
                     x: [0.5, 1.5, 4.5, 6, 10, 11, 12, 18, 19, 20, 21, 22, 24],
                     y: [1, 12, 20, 35, 8, 32, 50, 60, 55, 45, 50, 48, 10]
                 )
