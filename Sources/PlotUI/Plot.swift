@@ -296,7 +296,7 @@ public struct PlotView: View {
 
     /// Creates a plot view using the given axes and specified content.
     public init<Content: FuncView, HAxis: View, VAxis: View>(
-        @ViewBuilder content: () -> Content,
+        @FuncViewBuilder content: () -> Content,
         @ViewBuilder horizontal: () -> HAxis,
         @ViewBuilder vertical: () -> VAxis
     ) {
@@ -306,7 +306,7 @@ public struct PlotView: View {
     }
 
     /// Creates a plot view with determined horizontal and vertical axes.
-    public init<Content: FuncView>(@ViewBuilder content: () -> Content) {
+    public init<Content: FuncView>(@FuncViewBuilder content: () -> Content) {
         self.content = AnyFuncView(content())
         self.haxis = AnyView(HAxis(partitions: 10))
         self.vaxis = AnyView(VAxis(partitions: 4))
@@ -327,12 +327,15 @@ struct PlotViewPreview: PreviewProvider {
     static var previews: some View {
         ZStack {
             PlotView {
-                BarView(
-                    x: [0.5, 1.5, 4.5, 6, 10, 11, 12, 18, 19, 20, 21, 22, 15],
+                LineView(
+                    x: [0.5, 1.5, 4.5, 6, 10, 11, 12, 18, 19, 20, 21, 22, 24],
                     y: [1, 12, 20, 35, 8, 32, 50, 60, 55, 45, 50, 48, 10]
                 )
-                .barWidth(15)
-                .barColor(.blue)
+                ScatterView(
+                    x: [0.5, 1.5, 4.5, 6, 10, 11, 12, 18, 19, 20, 21, 22, 24],
+                    y: [1, 12, 20, 35, 8, 32, 50, 60, 55, 45, 50, 48, 10]
+                )
+                .scatterColor(.green)
             } horizontal: {
                 HAxis(
                     ticks: [0, 3, 6, 9, 12, 15, 18, 21, 24],
