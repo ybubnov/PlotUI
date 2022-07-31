@@ -159,6 +159,22 @@ public struct ContentDisposition: Equatable, CustomStringConvertible {
             maxY: _maxY ?? other._maxY
         )
     }
+
+    public static func joined(_ dispositions: ContentDisposition...) -> ContentDisposition {
+        var (minX, maxX): (Double?, Double?)
+        var (minY, maxY): (Double?, Double?)
+
+        for disposition in dispositions {
+            minX = minX == nil ? disposition._minX : min(minX!, disposition._minX ?? minX!)
+            maxX = maxX == nil ? disposition._maxX : max(maxX!, disposition._maxX ?? maxX!)
+            minY = minY == nil ? disposition._minY : min(minY!, disposition._minY ?? minY!)
+            maxY = maxY == nil ? disposition._maxX : max(maxY!, disposition._maxY ?? maxY!)
+        }
+
+        return ContentDisposition(
+            minX: minX, maxX: maxX, minY: minY, maxY: maxY
+        )
+    }
 }
 
 struct ContentDispositionEnvironmentKey: EnvironmentKey {
@@ -269,5 +285,115 @@ public struct AnyFuncView: FuncView {
     /// The content and behavior of the view.
     public var body: AnyView {
         _view
+    }
+}
+
+/// A function view created from a swift tuple of ``FuncView`` values.
+@frozen public struct TupleFuncView<T>: FuncView {
+    private var _value: T
+    private var _disposition: ContentDisposition
+
+    public init(_ value: T, _ disposition: ContentDisposition) {
+        self._value = value
+        self._disposition = disposition
+    }
+
+    /// The limits of the content.
+    public var disposition: ContentDisposition {
+        _disposition
+    }
+
+    /// The content and behavior of the view.
+    public var body: some View {
+        TupleView(_value)
+    }
+}
+
+/// A result builder that creates function view from closures.
+///
+/// The buildBlock methods in this type create ``TupleFuncView`` instances based
+/// on the number and types of sources provided as parameters.
+@resultBuilder public struct FuncViewBuilder {
+
+    private static func _d<F: FuncView>(_ f: F) -> ContentDisposition {
+        return f.disposition
+    }
+
+    /// Creates a function view from a single source.
+    public static func buildBlock<Content>(
+        _ content: Content
+    ) -> Content where Content: FuncView {
+        return content
+    }
+
+    /// Creates a function view from two sources.
+    public static func buildBlock<C0, C1>(
+        _ c0: C0, _ c1: C1
+    ) -> TupleFuncView<(C0, C1)> where C0: FuncView, C1: FuncView {
+        return TupleFuncView((c0, c1), .joined(_d(c0), _d(c1)))
+    }
+
+    /// Creates a function view from three sources.
+    public static func buildBlock<C0, C1, C2>(
+        _ c0: C0, _ c1: C1, _ c2: C2
+    ) -> TupleFuncView<(C0, C1, C2)
+    > where C0: FuncView, C1: FuncView, C2: FuncView {
+        return TupleFuncView((c0, c1, c2), .joined(_d(c0), _d(c1), _d(c2)))
+    }
+
+    /// Creates a function view from four sources.
+    public static func buildBlock<C0, C1, C2, C3>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3
+    ) -> TupleFuncView<(C0, C1, C2, C3)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView {
+        return TupleFuncView((c0, c1, c2, c3), .joined(_d(c0), _d(c1), _d(c2), _d(c3)))
+    }
+
+    /// Creates a function view from five sources.
+    public static func buildBlock<C0, C1, C2, C3, C4>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4)))
+    }
+
+    /// Creates a function view from six sources.
+    public static func buildBlock<C0, C1, C2, C3, C4, C5>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4, C5)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView, C5: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4, c5), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4), _d(c5)))
+    }
+
+    /// Creates a function view from seven sources.
+    public static func buildBlock<C0, C1, C2, C3, C4, C5, C6>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4, C5, C6)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView, C5: FuncView, C6: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4, c5, c6), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4), _d(c5), _d(c6)))
+    }
+
+    /// Creates a function view from eight sources.
+    public static func buildBlock<C0, C1, C2, C3, C4, C5, C6, C7>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4, C5, C6, C7)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView, C5: FuncView, C6: FuncView, C7: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4, c5, c6, c7), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4), _d(c5), _d(c6), _d(c7)))
+    }
+
+    /// Creates a function view from nine sources.
+    public static func buildBlock<C0, C1, C2, C3, C4, C5, C6, C7, C8>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4, C5, C6, C7, C8)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView, C5: FuncView, C6: FuncView, C7: FuncView, C8: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4, c5, c6, c7, c8), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4), _d(c5), _d(c6), _d(c7), _d(c8)))
+    }
+
+    /// Creates a function view from ten sources.
+    public static func buildBlock<C0, C1, C2, C3, C4, C5, C6, C7, C8, C9>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8, _ c9: C9
+    ) -> TupleFuncView<(C0, C1, C2, C3, C4, C5, C6, C7, C8, C9)
+    > where C0: FuncView, C1: FuncView, C2: FuncView, C3: FuncView, C4: FuncView, C5: FuncView, C6: FuncView, C7: FuncView, C8: FuncView, C9: FuncView {
+        return TupleFuncView((c0, c1, c2, c3, c4, c5, c6, c7, c8, c9), .joined(_d(c0), _d(c1), _d(c2), _d(c3), _d(c4), _d(c5), _d(c6), _d(c7), _d(c8), _d(c9)))
     }
 }
