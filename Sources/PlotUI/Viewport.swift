@@ -25,6 +25,66 @@ struct Viewport {
     }
 }
 
+/// A proxy for access to the size and coordinate space (for anchor resolution)
+/// of the container view.
+struct ViewportProxy {
+    let frame: CGRect
+    let xScale: CGFloat
+    let yScale: CGFloat
+    let xZero: CGFloat
+    let yZero: CGFloat
+
+    /// Projects x coordinate into the viewport coordinate space.
+    public func translateX(_ x: Double) -> CGFloat {
+        return xZero + x * xScale
+    }
+
+    /// Projects y coordinate into the viewport coordinate space.
+    public func translateY(_ y: Double) -> CGFloat {
+        return yZero - y * yScale
+    }
+}
+
+/// A container view that defines its content as a function of its own size and
+/// coordinate space.
+///
+/// This view returns a flexible preferred size to its parent layout.
+struct ViewportReader<Content>: View where Content: View  {
+
+    private var content: (ViewportProxy) -> Content
+    private var disposition: ContentDisposition
+
+    @Environment(\.viewport) private var viewport
+
+    init(
+        _ disposition: ContentDisposition,
+        @ViewBuilder content: @escaping (ViewportProxy) -> Content
+    ) {
+        self.disposition = disposition
+        self.content = content
+    }
+
+    var body: some View {
+        GeometryReader { rect in
+            let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
+
+            let xScale = CGFloat(frame.width / disposition.width)
+            let yScale = CGFloat(frame.height / disposition.height)
+
+            let xZero = (disposition.width - disposition.maxX) * xScale
+            let yZero = frame.height - (disposition.height - disposition.maxY) * yScale
+
+            content(ViewportProxy(
+                frame: frame,
+                xScale: xScale,
+                yScale: yScale,
+                xZero: xZero,
+                yZero: yZero
+            ))
+        }
+    }
+}
+
 /// An environment value to control the viewport of plots within view hierarchy.
 struct ViewportEnvironmentKey: EnvironmentKey {
     static var defaultValue: Viewport = Viewport()

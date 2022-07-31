@@ -66,7 +66,6 @@ public struct LineView: FuncView {
     private var y: [Double]
     private var _disposition: ContentDisposition
 
-    @Environment(\.viewport) private var viewport
     @Environment(\.contentDisposition) private var contentDisposition
 
     private var stroke: StrokeStyle = StrokeStyle(lineWidth: 2.0)
@@ -88,7 +87,7 @@ public struct LineView: FuncView {
         _ y: [Double],
         _ disposition: ContentDisposition
     ) {
-        self.x = x
+        self.x = Array(x[0..<min(y.count, x.count)])
         self.y = y
         self._disposition = disposition
     }
@@ -99,58 +98,41 @@ public struct LineView: FuncView {
     ///   - x: Coordinates on a horizontal axis.
     ///   - y: Coordinates on a vertical axis.
     public init(x: [Double], y: [Double]) {
-        self.x = x
-        self.y = y
-
-        self._disposition = ContentDisposition(
+        self.init(x, y, ContentDisposition(
             minX: x.min(), maxX: x.max(), minY: y.min(), maxY: y.max()
-        )
+        ))
     }
 
     /// The content and behaviour of the view.
     public var body: some View {
-        GeometryReader { rect in
-            let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
-
-            let xScale = CGFloat(frame.width / disposition.width)
-            let yScale = CGFloat(frame.height / disposition.height)
-            
-            let xZero = (disposition.width - disposition.maxX) * xScale
-            let yZero = frame.height - (disposition.height - disposition.maxY) * yScale
-
-            let minX = (x.first ?? disposition.minX) * xScale
-            let minY = (y.first ?? disposition.minY) * yScale
-            let maxX = (x.last ?? disposition.maxX) * xScale
+        ViewportReader(disposition) { viewport in
+            let minX = (x.first ?? disposition.minX) * viewport.xScale
+            let minY = (y.first ?? disposition.minY) * viewport.yScale
+            let maxX = (x.last ?? disposition.maxX) * viewport.xScale
 
             let line = Path { path in
-                path.move(to: CGPoint(x: xZero + minX, y: yZero - minY))
+                path.move(to: CGPoint(x: viewport.xZero + minX, y: viewport.yZero - minY))
                 x.indices.forEach { i in
-                    let xpos = x[i] * xScale
-                    let ypos = y[i] * yScale
-
-                    let x = xZero + xpos
-                    let y = yZero - ypos
+                    let x = viewport.translateX(x[i])
+                    let y = viewport.translateY(y[i])
 
                     path.addLine(to: CGPoint(x: x, y: y))
                 }
             }
             .stroke(style: stroke)
             .fill(color)
-            
-            let overlay = Path { path in
-                path.move(to: CGPoint(x: xZero + minX, y: yZero))
-                x.indices.forEach { i in
-                    let xpos = x[i] * xScale
-                    let ypos = y[i] * yScale
 
-                    let x = xZero + xpos
-                    let y = yZero - ypos
+            let overlay = Path { path in
+                path.move(to: CGPoint(x: viewport.xZero + minX, y: viewport.yZero))
+                x.indices.forEach { i in
+                    let x = viewport.translateX(x[i])
+                    let y = viewport.translateY(y[i])
 
                     path.addLine(to: CGPoint(x: x, y: y))
                 }
-                path.addLine(to: CGPoint(x: xZero + maxX, y: yZero))
+                path.addLine(to: CGPoint(x: viewport.xZero + maxX, y: viewport.yZero))
             }
-            
+
             overlay.fill(fill).overlay(line)
         }
     }

@@ -71,7 +71,6 @@ public struct BarView: FuncView {
     private var y: [Double]
     private var _disposition: ContentDisposition
 
-    @Environment(\.viewport) private var viewport
     @Environment(\.contentDisposition) private var contentDisposition
 
     private var radius: CGFloat = 2
@@ -88,7 +87,7 @@ public struct BarView: FuncView {
         _ y: [Double],
         _ disposition: ContentDisposition
     ) {
-        self.x = x
+        self.x = Array(x[0..<min(y.count, x.count)])
         self.y = y
         self._disposition = disposition
     }
@@ -99,44 +98,33 @@ public struct BarView: FuncView {
     ///   - x: The coordinates of the bars on horizontal axis.
     ///   - y: The height of the bars on vertical axis.
     public init(x: [Double], y: [Double]) {
-        self.x = x
-        self.y = y
-
-        self._disposition = ContentDisposition(
+        self.init(x, y, ContentDisposition(
             minX: x.min(), maxX: x.max(), minY: 0.0, maxY: y.max()
-        )
+        ))
     }
 
     /// The content and behaviour of the view.
     public var body: some View {
-        GeometryReader { rect in
-            let frame = viewport.inset(rect: CGRect(origin: .zero, size: rect.size))
-
-            let xScale = CGFloat(frame.width / disposition.width)
-            let yScale = CGFloat(frame.height / disposition.height)
-            
-            let xZero = (disposition.width - disposition.maxX) * xScale
-            let yZero = frame.height - (disposition.height - disposition.maxY) * yScale
-
+        ViewportReader(disposition) { viewport in
             let cornerSize = CGSize(width: radius, height: radius)
 
             Path { path in
                 x.indices.forEach { i in
-                    let xpos = x[i] * xScale
-                    let ypos = y[i] * yScale
+                    let xpos = x[i] * viewport.xScale
+                    let ypos = y[i] * viewport.yScale
                     let height = abs(ypos)
 
-                    let x = xZero + xpos - self.width / 2
-                    let y = ypos > 0 ? yZero - ypos : yZero
+                    let x = viewport.xZero + xpos - self.width / 2
+                    let y = ypos > 0 ? viewport.yZero - ypos : viewport.yZero
 
-                    let bar = frame.intersection(
+                    let bar = viewport.frame.intersection(
                         CGRect(x: x, y: y, width: self.width, height: height)
                     )
 
                     let sharpHeight = min(height, radius)
-                    let sharpY = ypos > 0 ? bar.maxY - sharpHeight : yZero
-                    
-                    let sharpOverlay = frame.intersection(
+                    let sharpY = ypos > 0 ? bar.maxY - sharpHeight : viewport.yZero
+
+                    let sharpOverlay = viewport.frame.intersection(
                         CGRect(x: x, y: sharpY, width: self.width, height: sharpHeight)
                     )
                     // Draw the bar only if its x-axis position is within the view range.

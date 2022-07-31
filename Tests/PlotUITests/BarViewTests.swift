@@ -14,17 +14,4 @@ final class BarViewTests: XCTestCase {
             bar.disposition,
             ContentDisposition(minX: -3.0, maxX: 2.0, minY: 0.0, maxY: 40.0))
     }
-
-    func testFill() throws {
-        var bar = BarView(x: [0.0], y: [1.0])
-        var shape = try bar.inspect().find(ViewType.GeometryReader.self).shape()
-
-        // Ensure default fill style is gray.
-        XCTAssertEqual(try shape.fillShapeStyle(Color.self), Color.gray)
-
-        // Modify the default color, and ensure it was changed.
-        bar = bar.barColor(.red)
-        shape = try bar.inspect().find(ViewType.GeometryReader.self).shape()
-        XCTAssertEqual(try shape.fillShapeStyle(Color.self), Color.red)
-    }
 }
